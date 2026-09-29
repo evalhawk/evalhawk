@@ -1,0 +1,161 @@
+# Documentation site config (Zensical, see docs/decisions/0008-zensical-docs.md).
+# Based on the template from `zensical new`. Preview: uv run zensical serve
+
+[project]
+site_url = "https://evalhawk.github.io/evalhawk/"
+site_name = "EvalHawk"
+site_description = "Trustworthy LLM evaluation: calibrate your judges against humans and get bias-corrected results with honest error bars."
+site_author = "Venkata Sai Karthik and Krishna Nandimandalam"
+
+copyright = "Copyright &copy; 2026 Venkata Sai Karthik and Krishna Nandimandalam"
+
+repo_url = "https://github.com/evalhawk/evalhawk"
+repo_name = "evalhawk/evalhawk"
+edit_uri = "edit/main/docs/"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Getting started" = "getting-started.md" },
+  { "Evaluating AI systems" = [
+    { "Overview" = "evals/index.md" },
+    { "Chatbots and Q&A" = "evals/chatbots.md" },
+    { "RAG systems" = "evals/rag.md" },
+    { "Summarization" = "evals/summarization.md" },
+    { "Classification and extraction" = "evals/classification.md" },
+    { "Structured output" = "evals/structured-output.md" },
+    { "Agents" = "evals/agents.md" },
+    { "Conversations" = "evals/conversations.md" },
+    { "Safety" = "evals/safety.md" },
+    { "The trust layer" = "evals/trust-layer.md" },
+  ] },
+  { "Features and comparison" = "features.md" },
+  { "Project" = [
+    { "Roadmap" = "roadmap.md" },
+    { "Requirements" = "requirements.md" },
+    { "Limitations" = "limitations.md" },
+  ] },
+  { "Design" = [
+    { "Architecture" = "architecture.md" },
+    { "Design patterns" = "design/patterns.md" },
+    { "Decision records" = [
+      { "Overview" = "decisions/index.md" },
+      { "0001 SQLite default store" = "decisions/0001-sqlite-default-store.md" },
+      { "0002 Thin edges, thick core" = "decisions/0002-thin-edges-thick-core.md" },
+      { "0003 Binary criteria only" = "decisions/0003-binary-criteria-only.md" },
+      { "0004 Protocols and helpers" = "decisions/0004-protocols-and-helper-base-classes.md" },
+      { "0005 Package layout" = "decisions/0005-package-layout.md" },
+      { "0006 IDs and splits" = "decisions/0006-content-addressed-ids-and-splits.md" },
+      { "0007 Parallel tracks" = "decisions/0007-build-order.md" },
+      { "0008 Zensical docs" = "decisions/0008-zensical-docs.md" },
+      { "0009 Lean runtime" = "decisions/0009-lean-runtime-no-scipy.md" },
+      { "ADR template" = "decisions/0000-template.md" },
+    ] },
+  ] },
+  { "Contributing" = [
+    { "Maintainer agreement" = "development/collaboration.md" },
+    { "Work plan" = "development/workplan.md" },
+    { "Engineering standards" = "development/standards.md" },
+    { "Dev log" = [
+      { "Overview" = "devlog/index.md" },
+      { "Entry template" = "devlog/template.md" },
+    ] },
+  ] },
+]
+
+# extra_css = ["stylesheets/extra.css"]
+# extra_javascript = ["javascripts/extra.js"]
+
+[project.theme]
+# variant = "classic"
+# custom_dir = "overrides"
+# favicon = "images/favicon.png"
+language = "en"
+features = [
+  "announce.dismiss",
+  "content.action.edit",
+  # "content.action.view",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.code.select",
+  "content.footnote.tooltips",
+  "content.tabs.link",
+  "content.tooltips",
+  # "header.autohide",
+  # "navigation.expand",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  # "navigation.instant.progress",
+  "navigation.path",
+  # "navigation.prune",
+  "navigation.sections",
+  # "navigation.tabs",
+  # "navigation.tabs.sticky",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+  # "toc.follow",
+  # "toc.integrate",
+]
+
+# logo = "assets/logo.png"
+
+# [project.theme.icon]
+# logo = "lucide/smile"
+
+# [project.theme.font]
+# text = "Inter"
+# code = "Jetbrains Mono"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/evalhawk/evalhawk"
+
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.arithmatex.generic = true
+pymdownx.betterem = {}
+pymdownx.caret = {}
+pymdownx.details = {}
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.magiclink = {}
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
+# pymdownx.snippets.base_path = "includes"
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tasklist.custom_checkbox = true
+pymdownx.tilde = {}

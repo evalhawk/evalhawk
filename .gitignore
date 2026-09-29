@@ -1,0 +1,34 @@
+# --- Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# --- Environments and secrets
+.venv/
+.env
+.env.*
+
+# --- Tool caches
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# --- evalhawk local state (eval database, caches)
+.evalhawk/
+
+# --- Docs build output
+site/
+.cache/
+
+# --- Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,193 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "evalhawk"
+version = "0.0.1"
+description = "Trustworthy LLM evaluation: calibrate your judges against humans and get bias-corrected results with honest error bars."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Venkata Sai Karthik" },
+    { name = "Krishna Nandimandalam" },
+]
+requires-python = ">=3.11"
+keywords = [
+    "llm",
+    "evaluation",
+    "llm-as-a-judge",
+    "calibration",
+    "statistics",
+    "rag",
+    "evals",
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+# The core install is deliberately small. Vendor integrations arrive later as
+# optional extras ([llm], [jev], [ui], [cluster], [langfuse], [otel]), each added
+# in the roadmap phase that first needs it.
+dependencies = [
+    "pydantic>=2.8",
+    "numpy>=2.0",
+    "scipy>=1.14",
+    "typer>=0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/evalhawk/evalhawk"
+Documentation = "https://evalhawk.github.io/evalhawk/"
+Repository = "https://github.com/evalhawk/evalhawk"
+Issues = "https://github.com/evalhawk/evalhawk/issues"
+Changelog = "https://github.com/evalhawk/evalhawk/blob/main/CHANGELOG.md"
+
+[project.scripts]
+evalhawk = "evalhawk.cli.main:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.100",
+    "ruff>=0.8",
+    "pyright[nodejs]>=1.1.390",
+    "pre-commit>=4.0",
+    "import-linter>=2.15",
+]
+docs = [
+    "zensical>=0.0.65",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evalhawk"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/evalhawk", "tests", "README.md", "LICENSE", "CHANGELOG.md"]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # bugbear
+    "UP",  # pyupgrade
+    "SIM", # simplify
+    "N",   # pep8-naming
+    "PT",  # pytest style
+    "RUF", # ruff-specific
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["evalhawk"]
+
+# ---------------------------------------------------------------- pyright
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
+# The domain core and the statistics are held to the strictest standard.
+strict = ["src/evalhawk/core", "src/evalhawk/stats"]
+venvPath = "."
+venv = ".venv"
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+xfail_strict = true
+markers = [
+    "slow: long-running statistical validation (coverage simulations)",
+    "live: calls real external APIs; never run in CI",
+]
+
+# ---------------------------------------------------------------- coverage
+[tool.coverage.run]
+source = ["evalhawk"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+# ---------------------------------------------------------------- import-linter
+# The dependency rule from docs/architecture.md section 3.1, enforced in CI.
+# Contracts may name packages that don't exist yet; they apply as soon as they do.
+# See docs/decisions/0005-package-layout.md.
+[tool.importlinter]
+root_package = "evalhawk"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "core and stats are pure: no application code, adapters, I/O or vendor SDKs"
+type = "forbidden"
+source_modules = ["evalhawk.core", "evalhawk.stats"]
+forbidden_modules = [
+    "evalhawk.cli",
+    "evalhawk.ui",
+    "evalhawk.wiring",
+    "evalhawk.config",
+    "evalhawk.plugins",
+    "evalhawk.services",
+    "evalhawk.runner",
+    "evalhawk.judges",
+    "evalhawk.targets",
+    "evalhawk.sources",
+    "evalhawk.storage",
+    "evalhawk.clustering",
+    "evalhawk.testing",
+    "typer",
+    "sqlite3",
+]
+
+# The next two contracts switch on when their source packages exist (import-linter
+# requires source modules to exist). Uncomment them in the phase that creates them.
+#
+# [[tool.importlinter.contracts]]
+# name = "services and runner depend on protocols, never on concrete adapters or interfaces"
+# type = "forbidden"
+# source_modules = ["evalhawk.services", "evalhawk.runner"]
+# forbidden_modules = [
+#     "evalhawk.cli",
+#     "evalhawk.ui",
+#     "evalhawk.wiring",
+#     "evalhawk.judges",
+#     "evalhawk.targets",
+#     "evalhawk.sources",
+#     "evalhawk.storage",
+# ]
+#
+# [[tool.importlinter.contracts]]
+# name = "adapters depend only on core (and stats), never on application code or interfaces"
+# type = "forbidden"
+# source_modules = [
+#     "evalhawk.judges",
+#     "evalhawk.targets",
+#     "evalhawk.sources",
+#     "evalhawk.storage",
+# ]
+# forbidden_modules = [
+#     "evalhawk.cli",
+#     "evalhawk.ui",
+#     "evalhawk.wiring",
+#     "evalhawk.services",
+#     "evalhawk.runner",
+# ]
