@@ -2,7 +2,7 @@
 
 - **Author:** Venkata Sai Karthik
 - **Date:** 2026-09-30
-- **Card:** [D1](../development/workplan.md) · **Issue:** [#11](https://github.com/evalhawk/evalhawk/issues/11) · **PR:** *(added when opened)*
+- **Card:** [D1](../development/workplan.md) · **Issue:** [#11](https://github.com/evalhawk/evalhawk/issues/11) · **PR:** [#23](https://github.com/evalhawk/evalhawk/pull/23)
 
 ## What I built
 
