@@ -13,4 +13,6 @@ what each of us built and learned.
 
 ## Entries
 
-*No entries yet. The first will come from J1, S1 and D1.*
+| Date | Card | Entry | Author |
+|---|---|---|---|
+| 2026-09-30 | D1 | [Content IDs](2026-09-30-D1-content-ids.md) | Venkata Sai Karthik |

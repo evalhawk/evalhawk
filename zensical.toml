@@ -57,6 +57,7 @@ nav = [
     { "Engineering standards" = "development/standards.md" },
     { "Dev log" = [
       { "Overview" = "devlog/index.md" },
+      { "D1 · Content IDs" = "devlog/2026-09-30-D1-content-ids.md" },
       { "Entry template" = "devlog/template.md" },
     ] },
   ] },

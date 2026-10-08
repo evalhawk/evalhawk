@@ -112,7 +112,7 @@ venv = ".venv"
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-addopts = ["-ra", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 xfail_strict = true
 markers = [
     "slow: long-running statistical validation (coverage simulations)",
