@@ -1,6 +1,6 @@
 # ADR-0009: Lean runtime: NumPy and the standard library, no SciPy
 
-- **Status:** Proposed (awaiting approval by both maintainers)
+- **Status:** Accepted (2026-10-09)
 - **Date:** 2026-09-29
 - **Deciders:** Venkata Sai Karthik, Krishna Nandimandalam
 

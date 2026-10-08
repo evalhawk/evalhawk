@@ -10,6 +10,19 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Coverage simulations (card S7): fixed-seed slow tests for naive, Rogan–Gladen, PPI,
+  and clustered intervals, plus a standalone theta-grid coverage plotting script.
+
+- Prediction-powered inference for mean estimation (card S5): `ppi_mean()` with unbiased
+  point estimate and confidence interval.
+- Judge agreement metrics (card S2): `Confusion` dataclass, `confusion()`, `sensitivity()`,
+  `specificity()`, and `cohen_kappa()` with bootstrap confidence intervals.
+- `wilson_interval()` confidence interval for binomial proportions (card S1).
+- `Estimate` result value object and the `EvalhawkError` exception hierarchy (card J1).
+
+### Changed
+
+- SciPy is no longer a runtime dependency (ADR-0009).
 - Project foundation: `src/` layout, `evalhawk --version` CLI, uv, ruff, pyright
   (strict on `core/` and `stats/`), pytest, Hypothesis, import-linter layer rules,
   pre-commit hooks.

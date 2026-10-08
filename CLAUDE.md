@@ -19,8 +19,8 @@ Two equal co-owners, both using Claude Code with this file:
 
 | Maintainer | GitHub | Current track (see `docs/development/workplan.md`) |
 |---|---|---|
-| Venkata Sai Karthik | EVSGoud | Track 1: statistics engine (`stats/`, cards S1–S7) |
-| Krishna Nandimandalam | kclectic0501 | Track 2: data backbone (`core/`, `storage/`, `sources/`, `testing/`, cards D1–D7) |
+| Venkata Sai Karthik | EVSGoud | Track 2: data backbone (`core/`, `storage/`, `sources/`, `testing/`, cards D1–D7) |
+| Krishna Nandimandalam | kclectic0501 | Track 1: statistics engine (`stats/`, cards S1–S7) |
 
 - **Follow the maintainer agreement** (`docs/development/collaboration.md`), especially §6 on AI use: the human must be able to explain every line; the human checks the tests; never push or merge without review; never put secrets or private data into prompts.
 - **Work from a card.** When a maintainer starts a task, read its card in `docs/development/workplan.md`. Explain the concept simply first, then write tests, then code. Stay inside that card's files; if a change touches the other track, say so explicitly so the PR can tag the other maintainer.

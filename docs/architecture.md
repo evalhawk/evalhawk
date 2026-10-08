@@ -451,15 +451,18 @@ evalhawk export --format csv|jsonl     → verdicts, labels and results, for use
 All functions are **pure**: NumPy arrays in, a frozen dataclass out. Every function takes an explicit `rng: np.random.Generator` when randomness is involved, so results are reproducible.
 
 ```python
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Estimate:
     point: float
     low: float
     high: float
-    confidence: float
     n: int
     method: str  # e.g. "wilson", "rogan_gladen+bootstrap", "ppi"
+    confidence: float = 0.95
+    unknown_rate: float = 0.0
 ```
+
+Estimate enforces only that all numeric fields are finite (`math.isfinite`), `low ≤ high`, `n ≥ 0`, `0 < confidence < 1`, and `0 ≤ unknown_rate ≤ 1`. Each method owns its point containment and bounds; for example, Wilson guarantees `[0, 1]`, and bootstrap methods document that their point estimates can rarely fall outside the interval.
 
 | Function | Module | Purpose |
 |---|---|---|

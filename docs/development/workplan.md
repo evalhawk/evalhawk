@@ -18,7 +18,7 @@ PR, and a [dev-log](../devlog/index.md) entry is written.
                 ┌───────────────┴────────────────┐
                 ▼                                ▼
    TRACK 1: STATISTICS ENGINE       TRACK 2: DATA BACKBONE
-   Owner: Karthik                   Owner: Krishna
+   Owner: Krishna                   Owner: Karthik
    S1 Wilson interval               D1 Content IDs         ← D1 can start
    S2 Judge agreement               D2 Data models            before J1
    S3 Judge correction (RG)         D3 Split assignment
@@ -29,15 +29,15 @@ PR, and a [dev-log](../devlog/index.md) entry is written.
                 └───────────────┬────────────────┘
                                 ▼
                  STAGE D: SWAP (each works in the other's world)
-                 X1 Krishna: store → stats glue (services/estimate.py)
-                 X2 Karthik: import recorded verdicts + DeepEval results
+                 X1 Karthik: store → stats glue (services/estimate.py)
+                 X2 Krishna: import recorded verdicts + DeepEval results
                  X3 Pair:    `evalhawk import` + `evalhawk report`   ← first demo
 ```
 
 - The tracks **don't block each other**: `stats/` takes NumPy arrays and never touches models
   or the database.
 - The only shared piece is **J1**. Track 1 needs it before S1; Track 2 doesn't need it until
-  much later, so Krishna can start D1 on day one.
+  much later, so Karthik can start D1 on day one.
 - To swap tracks, change the owner names on this page in a PR. Both of you approve.
 
 ## How to start any card with Claude Code
@@ -74,7 +74,7 @@ require `low ≤ high`?
 
 ---
 
-## Track 1: statistics engine (owner: Karthik)
+## Track 1: statistics engine (owner: Krishna)
 
 All functions live in `src/evalhawk/stats/`, are **pure** (arrays in, `Estimate` out), take
 randomness as `rng: np.random.Generator`, and use **NumPy and the standard library only**.
@@ -212,7 +212,7 @@ portfolio artefact.
 
 ---
 
-## Track 2: data backbone (owner: Krishna)
+## Track 2: data backbone (owner: Karthik)
 
 Files live in `src/evalhawk/core/`, `storage/`, `sources/` and `testing/`. `core/` must stay
 pure: no I/O, no vendor SDKs (import-linter enforces this).
@@ -339,8 +339,8 @@ of its setting; `InMemoryStore` passes the same round-trip tests as `SQLiteStore
 
 | Card | Owner | What | Why this owner |
 |---|---|---|---|
-| **X1** | Krishna | `services/estimate.py`: load arrays from the Store, call `stats`, return an `Estimate`. Switch on import-linter contract 2 | Krishna learns the statistics API |
-| **X2** | Karthik | `sources/verdicts.py`: import recorded judge verdicts and human labels (JSONL, and DeepEval result files: score ≥ threshold → PASS) | Karthik learns the data layer |
+| **X1** | Karthik | `services/estimate.py`: load arrays from the Store, call `stats`, return an `Estimate`. Switch on import-linter contract 2 | Karthik learns the statistics API |
+| **X2** | Krishna | `sources/verdicts.py`: import recorded judge verdicts and human labels (JSONL, and DeepEval result files: score ≥ threshold → PASS) | Krishna learns the data layer |
 | **X3** | Pair | `evalhawk import` and `evalhawk report` (Rich table): corrected pass rate, error range, judge report card | The first end-to-end demo, with zero LLM calls |
 
 **Stage D is done when:** on a public dataset with human labels, `evalhawk report` prints a
@@ -350,6 +350,6 @@ judge report card and a corrected pass rate with an error range.
 
 | | Karthik | Krishna |
 |---|---|---|
-| Day 1 | Phase 0 wrap-up: repo, settings, PyPI | Accept the org invite as Owner, clone, set up, first PR (approve the agreement + ADRs 0007, 0009) |
+| Day 1 | Accept the org invite as Owner, clone, set up, first PR (approve the agreement + ADRs 0007, 0009) | Phase 0 wrap-up: repo, settings, PyPI |
 | Day 2 | **J1 together** | **J1 together** |
-| Days 3–7 | S1 → S2 | D1 → D2 |
+| Days 3–7 | D1 → D2 | S1 → S2 |

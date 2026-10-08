@@ -56,7 +56,12 @@ nav = [
     { "Work plan" = "development/workplan.md" },
     { "Engineering standards" = "development/standards.md" },
     { "Dev log" = [
+        { "S2 · Judge agreement" = "devlog/2026-10-09-S2-judge-agreement.md" },
       { "Overview" = "devlog/index.md" },
+      { "S7 · Coverage simulation" = "devlog/2026-10-09-S7-coverage-simulation.md" },
+       { "S1 · Wilson score interval" = "devlog/2026-10-09-S1-wilson-interval.md" },
+       { "J1 · Estimate and errors" = "devlog/2026-10-09-J1-estimate.md" },
+
       { "D1 · Content IDs" = "devlog/2026-09-30-D1-content-ids.md" },
       { "Entry template" = "devlog/template.md" },
     ] },
