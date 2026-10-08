@@ -1,6 +1,6 @@
 # S1 · Wilson score interval
 
-- **Author:** AI Assistant
+- **Author:** Krishna Nandimandalam
 - **Date:** 2026-10-09
 - **Card:** [#5 S1](../development/workplan.md) · **PR:** TBD
 

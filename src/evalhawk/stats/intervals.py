@@ -10,9 +10,7 @@ from evalhawk.core.results import Estimate
 from evalhawk.stats._checks import check_confidence, z_value
 
 
-def wilson_interval(
-    k: int, n: int, *, confidence: float = 0.95
-) -> Estimate:
+def wilson_interval(k: int, n: int, *, confidence: float = 0.95) -> Estimate:
     """Compute a Wilson score confidence interval for a proportion.
 
     The Wilson interval is more accurate than Wald for extreme proportions and
@@ -38,8 +36,8 @@ def wilson_interval(
         An Estimate with the point estimate, interval bounds, and metadata.
 
     Raises:
-        TypeError: If k or n is a bool (to catch common mistakes).
-        ValueError: If k, n, or confidence are out of valid ranges.
+        ValueError: If k or n is a bool or not an int, or if k, n, or confidence are
+            out of valid ranges.
 
     References:
         - Wilson, E. B. (1927). "Probable inference, the law of succession, and

@@ -15,9 +15,12 @@ what each of us built and learned.
 
 | Date | Card | Entry | Author |
 |---|---|---|---|
-| 2026-10-09 | S7 | [Coverage simulation](2026-10-09-S7-coverage-simulation.md) | AI Assistant |
-| 2026-10-09 | S5 | [PPI correction](2026-10-09-S5-ppi.md) | AI Assistant |
-| 2026-10-09 | S2 | [Judge agreement](2026-10-09-S2-judge-agreement.md) | AI Assistant |
-| 2026-10-09 | S1 | [Wilson score interval](2026-10-09-S1-wilson-interval.md) | AI Assistant |
-| 2026-10-09 | J1 | [Estimate and errors](2026-10-09-J1-estimate.md) | AI Assistant |
+| 2026-10-09 | S7 | [Coverage simulation](2026-10-09-S7-coverage-simulation.md) | Krishna Nandimandalam |
+| 2026-10-09 | S6 | [Clustered errors and power](2026-10-09-S6-clustered-and-power.md) | Krishna Nandimandalam |
+| 2026-10-09 | S5 | [PPI correction](2026-10-09-S5-ppi.md) | Krishna Nandimandalam |
+| 2026-10-09 | S4 | [Version comparison](2026-10-09-S4-version-comparison.md) | Krishna Nandimandalam |
+| 2026-10-09 | S3 | [Rogan-Gladen correction](2026-10-09-S3-rogan-gladen.md) | Krishna Nandimandalam |
+| 2026-10-09 | S2 | [Judge agreement](2026-10-09-S2-judge-agreement.md) | Krishna Nandimandalam |
+| 2026-10-09 | S1 | [Wilson score interval](2026-10-09-S1-wilson-interval.md) | Krishna Nandimandalam |
+| 2026-10-09 | J1 | [Estimate and errors](2026-10-09-J1-estimate.md) | Krishna Nandimandalam |
 | 2026-09-30 | D1 | [Content IDs](2026-09-30-D1-content-ids.md) | Venkata Sai Karthik |

@@ -1,6 +1,6 @@
 # S2 · Judge agreement
 
-- **Author:** AI Assistant
+- **Author:** Krishna Nandimandalam
 - **Date:** 2026-10-09
 - **Card:** [#6](../development/workplan.md) · **PR:** #TBD
 
@@ -51,5 +51,4 @@ Asked for bootstrap implementation and array validation. Had to clarify:
 ## Learn more
 
 - Cohen, J. (1960). "A coefficient of agreement for nominal scales." Educational and Psychological Measurement.
-- Hamel, H. (2021). "What's calibration in ML?" (explains specificity ≠ FPR).
 - Architecture §13.1: naming convention trap (human=truth, PASS=positive).

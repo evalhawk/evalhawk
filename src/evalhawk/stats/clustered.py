@@ -18,9 +18,7 @@ from evalhawk.core.results import Estimate
 from evalhawk.stats._checks import check_confidence, check_same_length, z_value
 
 
-def cluster_robust_se(
-    scores: npt.ArrayLike, clusters: npt.ArrayLike
-) -> float:
+def cluster_robust_se(scores: npt.ArrayLike, clusters: npt.ArrayLike) -> float:
     """Cluster-robust standard error using Liang-Zeger method.
 
     Accounts for within-cluster correlation by computing the variance of
@@ -64,29 +62,74 @@ def cluster_robust_se(
 
     # Get unique clusters and map to indices
     unique_clusters, cluster_indices = np.unique(c_arr, return_inverse=True)
-    G = len(unique_clusters)
+    n_clusters = len(unique_clusters)
 
     # Validate at least 2 clusters
-    if G < 2:
+    if n_clusters < 2:
         raise ValueError(
-            f"clusters must have at least 2 unique values, got {G!r}"
+            f"clusters must have at least 2 unique values, got {n_clusters!r}"
         )
 
     # Compute mean
-    x_bar = np.mean(s_arr)
+    x_bar = float(np.mean(s_arr))
 
     # Compute cluster sums: Σ_{i∈g} (s_i − x̄)
-    cluster_sums = np.zeros(G, dtype=np.float64)
-    for i in range(n):
-        cluster_id = cluster_indices[i]
-        cluster_sums[cluster_id] += s_arr[i] - x_bar
+    cluster_sums = np.bincount(
+        cluster_indices.ravel(), weights=s_arr - x_bar, minlength=n_clusters
+    )
 
     # Compute variance: (1/n²) · Σ_g cluster_sums[g]²
-    var = np.sum(cluster_sums**2) / (n**2)
+    var = float(np.sum(cluster_sums**2)) / (n**2)
 
-    # Return SE
-    se = float(math.sqrt(var))
-    return se
+    return math.sqrt(var)
+
+
+def cluster_bootstrap_means(
+    values: npt.ArrayLike,
+    clusters: npt.ArrayLike,
+    *,
+    rng: np.random.Generator,
+    n_boot: int,
+) -> npt.NDArray[np.float64]:
+    """Bootstrap means of ``values``, resampling whole clusters with replacement.
+
+    Each resample draws as many clusters as there are in the data; its mean is the
+    sum of the drawn clusters' values divided by the number of items in them.
+
+    Args:
+        values: Numerical values, one per item.
+        clusters: Cluster label per item (any 1-D labels). Needs >= 2 distinct clusters.
+        rng: NumPy random generator for resampling.
+        n_boot: Number of bootstrap resamples.
+
+    Returns:
+        Array of ``n_boot`` resampled means.
+
+    Raises:
+        ValueError: If lengths differ or there is only one cluster.
+    """
+    v_arr = np.asarray(values, dtype=np.float64)
+    c_arr = np.asarray(clusters)
+    check_same_length("values", v_arr, "clusters", c_arr)
+
+    _, inverse = np.unique(c_arr, return_inverse=True)
+    inverse = inverse.ravel()
+    n_clusters = int(inverse.max()) + 1
+    if n_clusters < 2:
+        raise ValueError(
+            f"clusters must have at least 2 unique values for bootstrap, got {n_clusters!r}"
+        )
+
+    sums = np.bincount(inverse, weights=v_arr, minlength=n_clusters)
+    sizes = np.bincount(inverse, minlength=n_clusters).astype(np.float64)
+
+    means = np.empty(n_boot, dtype=np.float64)
+    chunk = 100  # bounds memory at chunk * n_clusters draws
+    for start in range(0, n_boot, chunk):
+        stop = min(start + chunk, n_boot)
+        draws = rng.integers(0, n_clusters, size=(stop - start, n_clusters))
+        means[start:stop] = sums[draws].sum(axis=1) / sizes[draws].sum(axis=1)
+    return means
 
 
 def clustered_mean_interval(

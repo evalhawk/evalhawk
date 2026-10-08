@@ -10,7 +10,8 @@ import numpy as np
 import numpy.typing as npt
 
 from evalhawk.core.results import Decision, Estimate
-from evalhawk.stats._checks import check_confidence, check_n_boot, check_same_length
+from evalhawk.stats._checks import as_binary, check_confidence, check_n_boot, check_same_length
+from evalhawk.stats.clustered import cluster_bootstrap_means
 
 
 def mcnemar_exact(b: int, c: int) -> float:
@@ -46,9 +47,7 @@ def mcnemar_exact(b: int, c: int) -> float:
     """
     # Validate inputs
     if isinstance(b, bool) or isinstance(c, bool):
-        raise ValueError(
-            f"b and c must be non-negative ints (not bool); got b={b!r}, c={c!r}"
-        )
+        raise ValueError(f"b and c must be non-negative ints (not bool); got b={b!r}, c={c!r}")
     if not isinstance(b, int) or not isinstance(c, int):
         raise ValueError(
             f"b and c must be ints; got b={type(b).__name__}, c={type(c).__name__}"
@@ -171,9 +170,9 @@ def paired_bootstrap(
         >>> est.point
         0.25
     """
-    # Convert to arrays
-    a_arr = np.asarray(a, dtype=np.int64)
-    b_arr = np.asarray(b, dtype=np.int64)
+    # Convert to arrays (binary-validated)
+    a_arr = as_binary("a", a)
+    b_arr = as_binary("b", b)
 
     # Validate lengths
     check_same_length("a", a_arr, "b", b_arr)
@@ -207,56 +206,16 @@ def paired_bootstrap(
             diff_chunk = d[idx].mean(axis=1)
             bootstrap_diffs.extend(diff_chunk.tolist())
 
+        bootstrap_diffs_arr = np.array(bootstrap_diffs)
         method = "paired_bootstrap"
     else:
         # Cluster-aware resampling
         c_arr = np.asarray(clusters)
         check_same_length("a", a_arr, "clusters", c_arr)
-
-        # Get unique clusters
-        unique_clusters, cluster_indices = np.unique(
-            c_arr, return_inverse=True
-        )
-        G = len(unique_clusters)
-
-        # Validate at least 2 clusters
-        if G < 2:
-            raise ValueError(
-                f"clusters must have at least 2 unique values for bootstrap, "
-                f"got {G!r}"
-            )
-
-        # Pre-compute per-cluster sums and sizes of differences
-        cluster_sums = np.zeros(G, dtype=np.float64)
-        cluster_sizes = np.zeros(G, dtype=np.int64)
-
-        for i in range(n):
-            cluster_id = cluster_indices[i]
-            cluster_sums[cluster_id] += d[i]
-            cluster_sizes[cluster_id] += 1
-
-        # Bootstrap resampling by cluster with chunking
-        chunk_size = 100
-        bootstrap_diffs = []
-
-        for chunk_start in range(0, n_boot, chunk_size):
-            chunk_end = min(chunk_start + chunk_size, n_boot)
-            chunk_n = chunk_end - chunk_start
-
-            # Resample cluster indices: (chunk_n, G)
-            cluster_idx = rng.integers(0, G, size=(chunk_n, G))
-
-            # For each resample, compute diff = sum_sums / sum_sizes
-            for i in range(chunk_n):
-                sampled_sums = cluster_sums[cluster_idx[i]]
-                sampled_sizes = cluster_sizes[cluster_idx[i]]
-                diff_val = np.sum(sampled_sums) / np.sum(sampled_sizes)
-                bootstrap_diffs.append(float(diff_val))
-
+        bootstrap_diffs_arr = cluster_bootstrap_means(d, c_arr, rng=rng, n_boot=n_boot)
         method = "paired_cluster_bootstrap"
 
     # Compute percentile interval
-    bootstrap_diffs_arr = np.array(bootstrap_diffs)
     lower_q = (1 - confidence) / 2
     upper_q = (1 + confidence) / 2
     low, high = np.quantile(bootstrap_diffs_arr, [lower_q, upper_q])

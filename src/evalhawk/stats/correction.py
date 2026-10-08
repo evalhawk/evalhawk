@@ -19,7 +19,8 @@ Assumptions:
 References:
     - Rogan, W. J., & Gladen, B. (1978). "Estimating prevalence from the results
       of a screening test." American Journal of Epidemiology, 107(1), 71–76.
-    - arXiv:2511.21140 (EvalHawk methods paper).
+    - "How to Correctly Report LLM-as-a-Judge Evaluations." arXiv:2511.21140.
+      (Method section: bootstrap intervals for the Rogan-Gladen correction.)
 """
 
 import math
@@ -38,6 +39,7 @@ from evalhawk.stats._checks import (
     z_value,
 )
 from evalhawk.stats.agreement import confusion
+from evalhawk.stats.clustered import cluster_bootstrap_means
 
 
 MIN_YOUDEN: Final = 0.1
@@ -200,86 +202,27 @@ def corrected_pass_rate(
     # Compute point estimate (this validates and may raise JudgeTooWeakError)
     point = rogan_gladen(q_obs, s_obs, c_obs)
 
-    # Bootstrap: resample calibration counts and test pass rate
-    counts = np.array([c.tp, c.fn, c.fp, c.tn], dtype=np.int64)
-    cell_probs = counts / n_cal
+    # Bootstrap: resample calibration counts and the test pass rate
+    cells = np.array([c.tp, c.fn, c.fp, c.tn], dtype=np.int64)
+    resamples = rng.multinomial(n_cal, cells / n_cal, size=n_boot).astype(np.float64)
+    tp_r, fn_r, fp_r, tn_r = resamples.T
 
-    # Resample counts (P1)
-    resamples_counts = rng.multinomial(n_cal, cell_probs, size=n_boot)
-    
-    # Resample test passes: either iid binomial or cluster bootstrap
     if test_clusters is None:
-        # Iid resampling (P1)
-        resamples_passes = rng.binomial(n_test, q_obs, size=n_boot)
+        q_r = rng.binomial(n_test, q_obs, size=n_boot) / n_test
     else:
-        # Cluster bootstrap
-        test_c_arr = np.asarray(test_clusters)
-        check_same_length("judge_test", judge_test_arr, "test_clusters", test_c_arr)
-        
-        # Get unique clusters
-        unique_clusters, cluster_indices = np.unique(
-            test_c_arr, return_inverse=True
+        q_r = cluster_bootstrap_means(
+            judge_test_arr, test_clusters, rng=rng, n_boot=n_boot
         )
-        G = len(unique_clusters)
-        
-        # Validate at least 2 clusters
-        if G < 2:
-            raise ValueError(
-                f"test_clusters must have at least 2 unique values for bootstrap, "
-                f"got {G!r}"
-            )
-        
-        # Pre-compute per-cluster passes and sizes
-        cluster_passes = np.zeros(G, dtype=np.int64)
-        cluster_sizes = np.zeros(G, dtype=np.int64)
-        
-        for i in range(n_test):
-            cluster_id = cluster_indices[i]
-            cluster_passes[cluster_id] += judge_test_arr[i]
-            cluster_sizes[cluster_id] += 1
-        
-        # Resample cluster indices and compute pass counts and total sizes
-        resamples_passes = np.zeros(n_boot, dtype=np.int64)
-        resamples_sizes = np.zeros(n_boot, dtype=np.int64)
-        for i in range(n_boot):
-            # Resample G cluster indices with replacement
-            cluster_idx = rng.integers(0, G, size=G)
-            # Sum passes and sizes of drawn clusters
-            resamples_passes[i] = np.sum(cluster_passes[cluster_idx])
-            resamples_sizes[i] = np.sum(cluster_sizes[cluster_idx])
 
-    # Compute θ* for each resample, handling degeneracies (P3)
-    thetas: list[float] = []
-    for i in range(n_boot):
-        tp_r, fn_r, fp_r, tn_r = resamples_counts[i]
-
-        # Degenerate: no items in a class (P3)
-        if (tp_r + fn_r) == 0 or (tn_r + fp_r) == 0:
-            continue
-
+    # Degenerate resamples give NaN or non-positive Youden's J and are dropped (P3)
+    with np.errstate(divide="ignore", invalid="ignore"):
         s_r = tp_r / (tp_r + fn_r)
         c_r = tn_r / (tn_r + fp_r)
-        # Compute q_r: use actual denominator from resampling
-        if test_clusters is None:
-            q_r = resamples_passes[i] / n_test
-        else:
-            # Cluster bootstrap: denominator is sum of drawn cluster sizes
-            denom = resamples_sizes[i]
-            q_r = resamples_passes[i] / denom if denom > 0 else 0.0
-
         youden_r = s_r + c_r - 1
+        theta_r = np.clip((q_r + c_r - 1) / youden_r, 0.0, 1.0)
 
-        # Degenerate: denominator <= 0 (P3)
-        if youden_r <= 0:
-            continue
-
-        # Apply correction and clip
-        theta_r = (q_r + c_r - 1) / youden_r
-        theta_r_clipped = float(np.clip(theta_r, 0.0, 1.0))
-        thetas.append(theta_r_clipped)
-
-    # Check dropout rate (P3)
-    n_dropped = n_boot - len(thetas)
+    valid = (tp_r + fn_r > 0) & (tn_r + fp_r > 0) & (youden_r > 0)
+    n_dropped = n_boot - int(valid.sum())
     if n_dropped > 0:
         drop_rate = n_dropped / n_boot
         if drop_rate > 0.01:
@@ -290,10 +233,7 @@ def corrected_pass_rate(
             )
 
     # Compute percentile interval (P2)
-    thetas_arr = np.array(thetas)
-    low, high = np.quantile(
-        thetas_arr, [(1 - confidence) / 2, (1 + confidence) / 2]
-    )
+    low, high = np.quantile(theta_r[valid], [(1 - confidence) / 2, (1 + confidence) / 2])
 
     return Estimate(
         point=point,
@@ -398,15 +338,15 @@ def ppi_mean(
     check_same_length("y_labeled", y_arr, "yhat_labeled", yhat_arr)
 
     n = len(y_arr)
-    N = len(yhat_unl_arr)
+    n_unlabeled = len(yhat_unl_arr)
 
     # Check n >= 2
     if n < 2:
         raise ValueError(f"n must be >= 2, got {n!r}")
 
     # Check N >= 2
-    if N < 2:
-        raise ValueError(f"N must be >= 2, got {N!r}")
+    if n_unlabeled < 2:
+        raise ValueError(f"N must be >= 2, got {n_unlabeled!r}")
 
     # Convert to float64 for computation
     y_arr = np.asarray(y_arr, dtype=np.float64)
@@ -424,7 +364,7 @@ def ppi_mean(
     var_rectifier = np.var(yhat_arr - y_arr, ddof=0)
 
     # Compute pooled standard error
-    se_sq = var_unlabeled / N + var_rectifier / n
+    se_sq = var_unlabeled / n_unlabeled + var_rectifier / n
     se = math.sqrt(se_sq)
 
     # Compute z-score for confidence level
@@ -438,7 +378,7 @@ def ppi_mean(
         point=float(theta),
         low=float(low),
         high=float(high),
-        n=N,
+        n=n_unlabeled,
         method="ppi",
         confidence=confidence,
     )

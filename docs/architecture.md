@@ -468,9 +468,9 @@ Estimate enforces only that all numeric fields are finite (`math.isfinite`), `lo
 |---|---|---|
 | `wilson_interval(k, n, confidence=0.95)` | `intervals` | CI for a proportion (§13.2) |
 | `bootstrap_ci(stat_fn, *arrays, n_boot, rng, clusters=None)` | `intervals` | Generic percentile bootstrap, cluster-aware |
-| `confusion(human, judge)` / `tpr_tnr(...)` / `cohen_kappa(...)` | `agreement` | Judge vs human agreement (§13.1) |
+| `confusion(human, judge)` / `sensitivity(c)` / `specificity(c)` | `cohen_kappa(human, judge, *, rng)` | `agreement` | Judge vs human agreement (§13.1) |
 | `rogan_gladen(q, sens, spec)` | `correction` | Point correction (§13.3) |
-| `corrected_pass_rate(judge_test, judge_cal, human_cal, *, weights, rng)` | `correction` | Rogan-Gladen + two-sample bootstrap CI |
+| `corrected_pass_rate(judge_test, judge_cal, human_cal, *, rng, test_clusters=None)` | `correction` | Rogan-Gladen + two-sample bootstrap CI |
 | `ppi_mean(y_lab, yhat_lab, yhat_unlab, *, weights, confidence)` | `correction` | Prediction-powered estimate (§13.3) |
 | `mcnemar_exact(b, c)` | `compare` | Paired significance test (§13.4) |
 | `paired_bootstrap(a, b, *, clusters, rng)` | `compare` | CI on the paired difference |
@@ -664,11 +664,11 @@ Timeline and "done when" criteria are in the [roadmap](roadmap.md). The build or
 ### Phase 2: Statistics core
 Build in this order, because each step uses the previous one:
 1. `intervals.wilson_interval`, `intervals.bootstrap_ci`
-2. `agreement.confusion`, `tpr_tnr`, `cohen_kappa`
+2. `agreement.confusion`, `sensitivity`, `specificity`, `cohen_kappa`
 3. `correction.rogan_gladen`, `correction.corrected_pass_rate` (two-sample bootstrap)
 4. `correction.ppi_mean`
 5. `compare.mcnemar_exact`, `compare.paired_bootstrap`
-6. `clustered.cluster_robust_se` (+ `clusters=` support in the bootstrap)
+6. `clustered.cluster_robust_se`, `clustered_mean_interval`, `cluster_bootstrap_means` (+ `clusters=` support in the paired bootstrap)
 7. `power.required_n_paired`
 8. `calibration.*`, `weighting.ipw_weights`
 - **Tests:** §11 rows 1–4. The coverage simulation is the phase gate.

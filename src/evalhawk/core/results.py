@@ -5,7 +5,6 @@ confidence level, the method used to compute it, and the fraction of unknown lab
 Every statistics function returns an Estimate.
 """
 
-import dataclasses
 import math
 from dataclasses import dataclass
 from typing import Literal
@@ -66,59 +65,42 @@ class Estimate:
         naming the field and showing the offending value.
         """
         # 1. Check finite: point, low, high, confidence, unknown_rate
-        if not math.isfinite(self.point):
-            raise ValueError(
-                f"Estimate: point must be finite, got {self.point!r}"
-            )
-        if not math.isfinite(self.low):
-            raise ValueError(
-                f"Estimate: low must be finite, got {self.low!r}"
-            )
-        if not math.isfinite(self.high):
-            raise ValueError(
-                f"Estimate: high must be finite, got {self.high!r}"
-            )
-        if not math.isfinite(self.confidence):
-            raise ValueError(
-                f"Estimate: confidence must be finite, got {self.confidence!r}"
-            )
-        if not math.isfinite(self.unknown_rate):
-            raise ValueError(
-                f"Estimate: unknown_rate must be finite, got {self.unknown_rate!r}"
-            )
+        finite_fields = (
+            ("point", self.point),
+            ("low", self.low),
+            ("high", self.high),
+            ("confidence", self.confidence),
+            ("unknown_rate", self.unknown_rate),
+        )
+        for name, value in finite_fields:
+            if not math.isfinite(value):
+                raise ValueError(f"Estimate: {name} must be finite, got {value!r}")
 
         # 2. Check low <= high
         if self.low > self.high:
             raise ValueError(
-                f"Estimate: low must be <= high, got low={self.low!r}, "
-                f"high={self.high!r}"
+                f"Estimate: low must be <= high, got low={self.low!r}, high={self.high!r}"
             )
 
         # 3. Check n >= 0
         if self.n < 0:
-            raise ValueError(
-                f"Estimate: n must be >= 0, got {self.n!r}"
-            )
+            raise ValueError(f"Estimate: n must be >= 0, got {self.n!r}")
 
         # 4. Check 0 < confidence < 1
         if not (0 < self.confidence < 1):
             raise ValueError(
-                f"Estimate: confidence must be strictly between 0 and 1, "
-                f"got {self.confidence!r}"
+                f"Estimate: confidence must be strictly between 0 and 1, got {self.confidence!r}"
             )
 
         # 5. Check 0 <= unknown_rate <= 1
         if not (0 <= self.unknown_rate <= 1):
             raise ValueError(
-                f"Estimate: unknown_rate must be between 0 and 1, "
-                f"got {self.unknown_rate!r}"
+                f"Estimate: unknown_rate must be between 0 and 1, got {self.unknown_rate!r}"
             )
 
         # 6. Check method is non-empty
         if not self.method.strip():
-            raise ValueError(
-                f"Estimate: method must be non-empty, got {self.method!r}"
-            )
+            raise ValueError(f"Estimate: method must be non-empty, got {self.method!r}")
 
     @property
     def width(self) -> float:
@@ -136,7 +118,6 @@ class Estimate:
             f"{self.point:.3f} [{self.low:.3f}, {self.high:.3f}] "
             f"({self.method}, n={self.n}, unknown={self.unknown_rate:.1%})"
         )
-
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -167,13 +148,9 @@ class Comparison:
         """Validate field values."""
         # Check p_value is finite and in [0, 1]
         if not math.isfinite(self.p_value):
-            raise ValueError(
-                f"Comparison: p_value must be finite, got {self.p_value!r}"
-            )
+            raise ValueError(f"Comparison: p_value must be finite, got {self.p_value!r}")
         if not (0 <= self.p_value <= 1):
-            raise ValueError(
-                f"Comparison: p_value must be in [0, 1], got {self.p_value!r}"
-            )
+            raise ValueError(f"Comparison: p_value must be in [0, 1], got {self.p_value!r}")
 
         # Check b >= 0
         if self.b < 0:

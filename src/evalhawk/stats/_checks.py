@@ -1,6 +1,7 @@
 """Private validation helpers for stats functions (P7)."""
 
 import statistics
+from collections.abc import Sized
 
 import numpy as np
 import numpy.typing as npt
@@ -17,9 +18,7 @@ def check_confidence(confidence: float, name: str = "confidence") -> None:
         ValueError: If confidence is not in (0, 1).
     """
     if not (0 < confidence < 1):
-        raise ValueError(
-            f"{name} must be strictly between 0 and 1, got {confidence!r}"
-        )
+        raise ValueError(f"{name} must be strictly between 0 and 1, got {confidence!r}")
 
 
 def z_value(confidence: float) -> float:
@@ -41,9 +40,7 @@ def z_value(confidence: float) -> float:
     return statistics.NormalDist().inv_cdf((1 + confidence) / 2)
 
 
-def as_binary(
-    name: str, values: npt.ArrayLike
-) -> npt.NDArray[np.int64]:
+def as_binary(name: str, values: npt.ArrayLike) -> npt.NDArray[np.int64]:
     """Convert array-like to 1-D array of 0/1 values.
 
     Validates that the input is 1-D, non-empty, and contains only 0, 1, or bool
@@ -64,9 +61,7 @@ def as_binary(
 
     # Check 1-D
     if arr.ndim != 1:
-        raise ValueError(
-            f"{name} must be 1-D, got {arr.ndim}-D array of shape {arr.shape!r}"
-        )
+        raise ValueError(f"{name} must be 1-D, got {arr.ndim}-D array of shape {arr.shape!r}")
 
     # Check non-empty
     if arr.size == 0:
@@ -90,9 +85,7 @@ def as_binary(
     )
 
 
-def check_same_length(
-    name1: str, arr1: npt.NDArray, name2: str, arr2: npt.NDArray
-) -> None:
+def check_same_length(name1: str, arr1: Sized, name2: str, arr2: Sized) -> None:
     """Validate that two arrays have the same length.
 
     Args:

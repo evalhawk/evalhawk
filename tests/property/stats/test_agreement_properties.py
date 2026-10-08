@@ -1,7 +1,7 @@
-\"\"\"Property-based tests for judge agreement metrics (card S2).
+"""Property-based tests for judge agreement metrics (card S2).
 
 Uses Hypothesis for property testing with fixed seeds for reproducibility.
-\"\"\"
+"""
 
 import numpy as np
 import pytest
@@ -10,109 +10,71 @@ from hypothesis import strategies as st
 
 from evalhawk.stats.agreement import cohen_kappa, confusion
 
+# Both classes with at least 5 items each, so degenerate bootstrap resamples stay rare.
+_BOTH_CLASSES = st.lists(st.integers(0, 1), min_size=20, max_size=100).filter(
+    lambda x: 5 <= sum(x) <= len(x) - 5
+)
+_PAIRS = st.lists(st.tuples(st.integers(0, 1), st.integers(0, 1)), min_size=20, max_size=100)
+
 
 # ================================================== perfect judge property
 class TestPerfectJudgeProperty:
-    \"\"\"Property: perfect judge (judge == human) has kappa = 1.0.\"\"\"
+    """Property: perfect judge (judge == human) has kappa = 1.0."""
 
-    @given(
-        human=st.lists(
-            st.integers(0, 1), min_size=2, max_size=100
-        ).filter(lambda x: len(set(x)) > 1)  # both classes present
-    )
+    @given(human=_BOTH_CLASSES)
     @settings(derandomize=True)
-    def test_perfect_judge_kappa_is_one(self, human: list) -> None:
-        \"\"\"Perfect judge (judge == human) yields kappa = 1.0.\"\"\"
-        judge = human  # Perfect agreement
+    def test_perfect_judge_kappa_is_one(self, human: list[int]) -> None:
+        """Perfect judge (judge == human) yields kappa = 1.0."""
         rng = np.random.default_rng(42)
-        est = cohen_kappa(human, judge, rng=rng, n_boot=100)
+        est = cohen_kappa(human, human, rng=rng, n_boot=2000)
         assert est.point == pytest.approx(1.0, abs=1e-6)
 
 
 # ================================================== interval properties
 class TestKappaIntervalProperties:
-    \"\"\"Property: kappa interval is valid and well-formed.\"\"\"
+    """Property: kappa interval is valid and well-formed."""
 
-    @given(
-        human=st.lists(
-            st.integers(0, 1),
-            min_size=10,
-            max_size=100
-        ).filter(lambda x: len(set(x)) > 1),  # both classes present
-        judge=st.lists(
-            st.integers(0, 1),
-            min_size=10,
-            max_size=100
-        ).filter(lambda x: len(set(x)) > 1),  # both classes present
-    )
+    @given(pairs=_PAIRS)
     @settings(derandomize=True)
-    def test_kappa_low_le_high(self, human: list, judge: list) -> None:
-        \"\"\"Kappa interval: low <= high always.\"\"\"
-        if len(human) != len(judge):
-            return
+    def test_kappa_low_le_high(self, pairs: list[tuple[int, int]]) -> None:
+        """Kappa interval: low <= high always."""
+        human = [p[0] for p in pairs]
+        judge = [p[1] for p in pairs]
         try:
-            rng = np.random.default_rng(42)
-            est = cohen_kappa(human, judge, rng=rng, n_boot=100)
-            assert est.low <= est.high
+            est = cohen_kappa(human, judge, rng=np.random.default_rng(42), n_boot=100)
         except ValueError:
-            # p_e == 1 or other degenerate case; skip
-            pass
+            return  # kappa undefined or too many degenerate resamples for this sample
+        assert est.low <= est.high
 
-    @given(
-        human=st.lists(
-            st.integers(0, 1),
-            min_size=10,
-            max_size=100
-        ).filter(lambda x: len(set(x)) > 1),
-        judge=st.lists(
-            st.integers(0, 1),
-            min_size=10,
-            max_size=100
-        ).filter(lambda x: len(set(x)) > 1),
-    )
+    @given(pairs=_PAIRS)
     @settings(derandomize=True)
-    def test_kappa_within_bounds(self, human: list, judge: list) -> None:
-        \"\"\"Kappa interval within [-1, 1].\"\"\"
-        if len(human) != len(judge):
-            return
+    def test_kappa_within_bounds(self, pairs: list[tuple[int, int]]) -> None:
+        """Kappa interval within [-1, 1]."""
+        human = [p[0] for p in pairs]
+        judge = [p[1] for p in pairs]
         try:
-            rng = np.random.default_rng(42)
-            est = cohen_kappa(human, judge, rng=rng, n_boot=100)
-            assert -1.0 <= est.low
-            assert est.high <= 1.0
+            est = cohen_kappa(human, judge, rng=np.random.default_rng(42), n_boot=100)
         except ValueError:
-            pass
+            return  # kappa undefined or too many degenerate resamples for this sample
+        assert -1.0 <= est.low
+        assert est.high <= 1.0
 
 
 # ================================================== order independence
 class TestConfusionOrderIndependence:
-    \"\"\"Property: confusion matrix is order-independent.\"\"\"
+    """Property: confusion matrix is order-independent."""
 
-    @given(
-        pairs=st.lists(
-            st.tuples(st.integers(0, 1), st.integers(0, 1)),
-            min_size=2,
-            max_size=100
-        )
-    )
+    @given(pairs=_PAIRS, data=st.data())
     @settings(derandomize=True)
     def test_confusion_order_independent(
-        self, pairs: list
+        self, pairs: list[tuple[int, int]], data: st.DataObject
     ) -> None:
-        \"\"\"Shuffling item order doesn't change confusion.\"\"\"
-        human = [p[0] for p in pairs]
-        judge = [p[1] for p in pairs]
+        """Shuffling item order doesn't change confusion."""
+        c1 = confusion([p[0] for p in pairs], [p[1] for p in pairs])
 
-        c1 = confusion(human, judge)
+        shuffled = data.draw(st.permutations(pairs))
+        c2 = confusion([p[0] for p in shuffled], [p[1] for p in shuffled])
 
-        # Shuffle
-        shuffled_pairs = sorted(pairs, key=lambda _: np.random.default_rng(42).random())
-        human_shuffled = [p[0] for p in shuffled_pairs]
-        judge_shuffled = [p[1] for p in shuffled_pairs]
+        assert c1 == c2
 
-        c2 = confusion(human_shuffled, judge_shuffled)
 
-        assert c1.tp == c2.tp
-        assert c1.fn == c2.fn
-        assert c1.fp == c2.fp
-        assert c1.tn == c2.tn

@@ -21,7 +21,7 @@ class TestRequiredNPaired:
         """Larger delta → smaller n."""
         n_small_delta = required_n_paired(0.2, 0.02)
         n_large_delta = required_n_paired(0.2, 0.05)
-        
+
         assert n_large_delta < n_small_delta
 
     def test_delta_squared_exceeds_p_disc_raises(self) -> None:

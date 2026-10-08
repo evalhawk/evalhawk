@@ -4,13 +4,12 @@ Computes the number of paired examples (e.g., questions about the same document)
 needed to detect a specified difference with given power.
 
 References:
-    - Miller, E. (2024). Power analysis for paired data with clustered
-      observations.
+    - Miller, E. (2024). "Adding Error Bars to Evals: A Statistical Approach to
+      Language Model Evaluations." arXiv:2411.00640.
 """
 
 import math
-
-from evalhawk.stats._checks import z_value
+from statistics import NormalDist
 
 
 def required_n_paired(
@@ -46,14 +45,12 @@ def required_n_paired(
             or alpha/power not in (0, 1).
 
     References:
-        - Miller, E. (2024). Power analysis for paired data with clustered
-          observations.
+        - Miller, E. (2024). "Adding Error Bars to Evals: A Statistical Approach
+          to Language Model Evaluations." arXiv:2411.00640.
     """
     # Validate p_discordant
     if not (0 < p_discordant <= 1):
-        raise ValueError(
-            f"p_discordant must be in (0, 1], got {p_discordant!r}"
-        )
+        raise ValueError(f"p_discordant must be in (0, 1], got {p_discordant!r}")
 
     # Validate delta
     if delta == 0:
@@ -75,9 +72,10 @@ def required_n_paired(
     if not (0 < power < 1):
         raise ValueError(f"power must be in (0, 1), got {power!r}")
 
-    # Compute z-scores
-    z_alpha = z_value(1 - alpha)  # Two-tailed: z_{1−α/2}
-    z_power_val = z_value(power)  # One-tailed: z_{power}
+    # z_{1-alpha/2} (two-sided) and z_{power} (one-sided) are different quantiles
+    normal = NormalDist()
+    z_alpha = normal.inv_cdf(1 - alpha / 2)
+    z_power_val = normal.inv_cdf(power)
 
     # Compute numerator
     numerator = (z_alpha + z_power_val) ** 2 * (p_discordant - delta_sq)

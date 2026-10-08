@@ -1,6 +1,6 @@
 # S7 · Coverage simulation
 
-- **Author:** AI Assistant
+- **Author:** Krishna Nandimandalam
 - **Date:** 2026-10-09
 - **Card:** [#19 · S7](../development/workplan.md) · **PR:** pending
 

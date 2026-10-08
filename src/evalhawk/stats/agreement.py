@@ -13,9 +13,6 @@ where p_o is observed agreement and p_e is expected agreement by chance.
 References:
     - Cohen, J. (1960). "A coefficient of agreement for nominal scales."
       Educational and Psychological Measurement, 20(1), 37–46.
-    - Hamel, H. (2021). "What's calibration in ML? And why it matters."
-      https://hamel.dev/blog/posts/calibration/
-      (Explains the naming trap: specificity ≠ false positive rate.)
 """
 
 from dataclasses import dataclass
@@ -77,9 +74,7 @@ class Confusion:
         return self.tp + self.fn + self.fp + self.tn
 
 
-def confusion(
-    human: npt.ArrayLike, judge: npt.ArrayLike
-) -> Confusion:
+def confusion(human: npt.ArrayLike, judge: npt.ArrayLike) -> Confusion:
     """Compute the 2×2 confusion matrix.
 
     Args:
@@ -104,9 +99,7 @@ def confusion(
     return Confusion(tp=tp, fn=fn, fp=fp, tn=tn)
 
 
-def sensitivity(
-    c: Confusion, *, confidence: float = 0.95
-) -> Estimate:
+def sensitivity(c: Confusion, *, confidence: float = 0.95) -> Estimate:
     """Sensitivity (recall of the PASS class).
 
     Sensitivity = TP / (TP + FN).
@@ -133,9 +126,7 @@ def sensitivity(
     return wilson_interval(c.tp, n_pass, confidence=confidence)
 
 
-def specificity(
-    c: Confusion, *, confidence: float = 0.95
-) -> Estimate:
+def specificity(c: Confusion, *, confidence: float = 0.95) -> Estimate:
     """Specificity (recall of the FAIL class).
 
     Specificity = TN / (TN + FP).
@@ -159,6 +150,7 @@ def specificity(
             "label more failing examples"
         )
 
+    return wilson_interval(c.tn, n_fail, confidence=confidence)
 
 
 def cohen_kappa(
@@ -208,10 +200,7 @@ def cohen_kappa(
     p_margin_judge_pass = (c.tp + c.fp) / n
     p_margin_fail = (c.tn + c.fp) / n
     p_margin_judge_fail = (c.fn + c.tn) / n
-    p_e = (
-        p_margin_pass * p_margin_judge_pass
-        + p_margin_fail * p_margin_judge_fail
-    )
+    p_e = p_margin_pass * p_margin_judge_pass + p_margin_fail * p_margin_judge_fail
 
     if p_e >= 1.0:
         raise ValueError(
@@ -222,28 +211,13 @@ def cohen_kappa(
     observed_kappa = (p_o - p_e) / (1 - p_e)
 
     counts = np.array([c.tp, c.fn, c.fp, c.tn], dtype=np.int64)
-    cell_probs = counts / n
-    resamples = rng.multinomial(n, cell_probs, size=n_boot)
+    resamples = rng.multinomial(n, counts / n, size=n_boot).astype(np.float64)
+    tp_r, fn_r, fp_r, tn_r = resamples.T
+    p_o_r = (tp_r + tn_r) / n
+    p_e_r = ((tp_r + fn_r) * (tp_r + fp_r) + (tn_r + fp_r) * (fn_r + tn_r)) / (n * n)
 
-    kappas = []
-    for tp_r, fn_r, fp_r, tn_r in resamples:
-        p_o_r = (tp_r + tn_r) / n
-        p_margin_pass_r = (tp_r + fn_r) / n
-        p_margin_judge_pass_r = (tp_r + fp_r) / n
-        p_margin_fail_r = (tn_r + fp_r) / n
-        p_margin_judge_fail_r = (fn_r + tn_r) / n
-        p_e_r = (
-            p_margin_pass_r * p_margin_judge_pass_r
-            + p_margin_fail_r * p_margin_judge_fail_r
-        )
-
-        if p_e_r >= 1.0:
-            continue
-
-        kappa_r = (p_o_r - p_e_r) / (1 - p_e_r)
-        kappas.append(kappa_r)
-
-    n_dropped = n_boot - len(kappas)
+    valid = p_e_r < 1.0
+    n_dropped = n_boot - int(valid.sum())
     if n_dropped > 0:
         drop_rate = n_dropped / n_boot
         if drop_rate > 0.01:
@@ -252,15 +226,13 @@ def cohen_kappa(
                 f"({drop_rate:.1%}) resamples degenerate; label more examples"
             )
 
-    kappas_arr = np.array(kappas)
-    low, high = np.quantile(
-        kappas_arr, [(1 - confidence) / 2, (1 + confidence) / 2]
-    )
+    kappas = (p_o_r[valid] - p_e_r[valid]) / (1 - p_e_r[valid])
+    low, high = np.quantile(kappas, [(1 - confidence) / 2, (1 + confidence) / 2])
 
     return Estimate(
         point=observed_kappa,
-        low=low,
-        high=high,
+        low=float(low),
+        high=float(high),
         n=n,
         method="cohen_kappa+bootstrap",
         confidence=confidence,
