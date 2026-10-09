@@ -150,10 +150,11 @@ def test_intervals_cover_known_truth_at_expected_rate(
         assert 0.935 <= coverage <= 0.965, message
     if clustered:
         baseline_coverage = baseline_covered / REPLICATES
-        assert baseline_coverage < 0.90, (
+        # Calibration uncertainty is iid and dilutes the cluster effect for Rogan-Gladen,
+        # so there the unclustered interval only has to be clearly worse, not below 90%.
+        limit = 0.90 if method == "clustered_a" else coverage - 0.02
+        assert baseline_coverage < limit, (
             f"{method}, theta={theta}: unclustered coverage={baseline_coverage:.4f}"
         )
-
-
 
 

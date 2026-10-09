@@ -21,7 +21,8 @@ def test_mcnemar_exact_vs_scipy_reference() -> None:
     b_c_pairs = rng.integers(0, 2001, size=(5000, 2))
 
     errors = []
-    for b, c in b_c_pairs:
+    for b_raw, c_raw in b_c_pairs:
+        b, c = int(b_raw), int(c_raw)  # mcnemar_exact rejects numpy integer types
         if b + c == 0:
             continue  # Skip zero case
 

@@ -1,10 +1,36 @@
 """Private validation helpers for stats functions (P7)."""
 
+import operator
 import statistics
 from collections.abc import Sized
+from typing import SupportsIndex
 
 import numpy as np
 import numpy.typing as npt
+
+
+def as_count(name: str, value: SupportsIndex) -> int:
+    """Convert an integer-like value (Python or NumPy int) to a plain ``int``.
+
+    Floats such as ``5.0`` and booleans are rejected on purpose: they usually mean
+    a count was computed wrongly.
+
+    Args:
+        name: Parameter name for error messages.
+        value: Any object that supports ``operator.index``.
+
+    Returns:
+        The value as a Python ``int``.
+
+    Raises:
+        ValueError: If the value is a bool or is not integer-like.
+    """
+    if isinstance(value, bool | np.bool_):
+        raise ValueError(f"{name} must be int, not bool, got {value!r}")
+    try:
+        return operator.index(value)
+    except TypeError:
+        raise ValueError(f"{name} must be int, got {type(value).__name__}") from None
 
 
 def check_confidence(confidence: float, name: str = "confidence") -> None:
@@ -68,16 +94,14 @@ def as_binary(name: str, values: npt.ArrayLike) -> npt.NDArray[np.int64]:
         raise ValueError(f"{name} must be non-empty, got shape {arr.shape!r}")
 
     # Convert bool to int
-    if arr.dtype == bool:
+    if np.issubdtype(arr.dtype, np.bool_):
         return arr.astype(np.int64)
 
-    # Check values are 0 or 1
-    if arr.dtype in (np.int64, np.int32, np.int16, np.int8, int):
-        if np.all((arr == 0) | (arr == 1)):
-            return np.asarray(arr, dtype=np.int64)
-    if arr.dtype in (np.float64, np.float32, float):
-        if np.all((arr == 0.0) | (arr == 1.0)):
-            return np.asarray(arr, dtype=np.int64)
+    # Check values are 0 or 1 (integer or float dtype)
+    if np.issubdtype(arr.dtype, np.integer) and np.all((arr == 0) | (arr == 1)):
+        return np.asarray(arr, dtype=np.int64)
+    if np.issubdtype(arr.dtype, np.floating) and np.all((arr == 0.0) | (arr == 1.0)):
+        return np.asarray(arr, dtype=np.int64)
 
     raise ValueError(
         f"{name} must contain only 0, 1, or bool values, got {arr.dtype} "
@@ -99,8 +123,7 @@ def check_same_length(name1: str, arr1: Sized, name2: str, arr2: Sized) -> None:
     """
     if len(arr1) != len(arr2):
         raise ValueError(
-            f"{name1} and {name2} must have the same length, "
-            f"got {len(arr1)} and {len(arr2)}"
+            f"{name1} and {name2} must have the same length, got {len(arr1)} and {len(arr2)}"
         )
 
 

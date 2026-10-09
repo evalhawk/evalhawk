@@ -41,7 +41,6 @@ from evalhawk.stats._checks import (
 from evalhawk.stats.agreement import confusion
 from evalhawk.stats.clustered import cluster_bootstrap_means
 
-
 MIN_YOUDEN: Final = 0.1
 """Minimum Youden's J = s + c − 1 to attempt correction.
 
@@ -94,9 +93,9 @@ def rogan_gladen(q: float, sensitivity: float, specificity: float) -> float:
     if not (0 <= specificity <= 1):
         raise ValueError(f"specificity must be in [0, 1], got {specificity!r}")
 
-    # Check Youden's J
+    # Check Youden's J (tolerance: 0.6 + 0.5 - 1 is 0.10000000000000009 in floats)
     youden = sensitivity + specificity - 1
-    if youden <= MIN_YOUDEN:
+    if youden <= MIN_YOUDEN + 1e-12:
         raise JudgeTooWeakError(
             f"judge too weak to correct: observed sensitivity={sensitivity:.4f}, "
             f"specificity={specificity:.4f}, Youden's J={youden:.4f} <= {MIN_YOUDEN}; "
@@ -210,9 +209,7 @@ def corrected_pass_rate(
     if test_clusters is None:
         q_r = rng.binomial(n_test, q_obs, size=n_boot) / n_test
     else:
-        q_r = cluster_bootstrap_means(
-            judge_test_arr, test_clusters, rng=rng, n_boot=n_boot
-        )
+        q_r = cluster_bootstrap_means(judge_test_arr, test_clusters, rng=rng, n_boot=n_boot)
 
     # Degenerate resamples give NaN or non-positive Youden's J and are dropped (P3)
     with np.errstate(divide="ignore", invalid="ignore"):

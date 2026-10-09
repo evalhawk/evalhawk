@@ -173,4 +173,3 @@ class Comparison:
             f"{point_str} [{low_str}, {high_str}] {self.decision} "
             f"(p={self.p_value:.3f}, b={self.b}, c={self.c})"
         )
-

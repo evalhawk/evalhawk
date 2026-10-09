@@ -5,9 +5,24 @@ interval is guaranteed to stay within [0, 1] and is accurate for all sample
 sizes and proportions.
 """
 
+import numpy as np
 import pytest
 
 from evalhawk.stats.intervals import wilson_interval
+
+
+# ================================================================ numpy integers
+class TestWilsonNumpyIntegers:
+    """Counts computed from arrays are NumPy integers and must be accepted."""
+
+    def test_numpy_int_counts_match_python_ints(self) -> None:
+        """np.int64 counts give the same Estimate as Python ints."""
+        assert wilson_interval(np.int64(82), np.int64(100)) == wilson_interval(82, 100)
+
+    def test_numpy_bool_is_rejected(self) -> None:
+        """np.bool_ is rejected like bool."""
+        with pytest.raises(ValueError, match="not bool"):
+            wilson_interval(np.bool_(True), 10)  # type: ignore[arg-type]
 
 
 # ================================================================ golden values
@@ -87,6 +102,8 @@ class TestWilsonStringRepresentation:
 
     def test_str_format_exact_match(self) -> None:
         """String representation matches the exact format."""
+        est = wilson_interval(82, 100)
+        assert str(est) == "0.820 [0.733, 0.883] (wilson, n=100, unknown=0.0%)"
 
 
 # ================================================================ error cases
@@ -130,30 +147,22 @@ class TestWilsonErrors:
 
     def test_confidence_zero_raises(self) -> None:
         """confidence=0 raises ValueError."""
-        with pytest.raises(
-            ValueError, match="confidence must be strictly between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="confidence must be strictly between 0 and 1"):
             wilson_interval(5, 10, confidence=0.0)
 
     def test_confidence_one_raises(self) -> None:
         """confidence=1 raises ValueError."""
-        with pytest.raises(
-            ValueError, match="confidence must be strictly between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="confidence must be strictly between 0 and 1"):
             wilson_interval(5, 10, confidence=1.0)
 
     def test_confidence_negative_raises(self) -> None:
         """confidence < 0 raises ValueError."""
-        with pytest.raises(
-            ValueError, match="confidence must be strictly between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="confidence must be strictly between 0 and 1"):
             wilson_interval(5, 10, confidence=-0.1)
 
     def test_confidence_above_one_raises(self) -> None:
         """confidence > 1 raises ValueError."""
-        with pytest.raises(
-            ValueError, match="confidence must be strictly between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="confidence must be strictly between 0 and 1"):
             wilson_interval(5, 10, confidence=1.5)
 
 

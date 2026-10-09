@@ -93,7 +93,6 @@ def _simulate_world_clustered(
     return human_cal, judge_cal, human_test, judge_test, test_clusters
 
 
-
 def _run_coverage_simulation(theta: float, reps: int, seed: int) -> dict[str, float]:
     """Count coverage in iid and clustered worlds using independent, fixed random streams.
 
@@ -121,21 +120,23 @@ def _run_coverage_simulation(theta: float, reps: int, seed: int) -> dict[str, fl
         human_cal, judge_cal, human_test, judge_test, clusters = _simulate_world_clustered(
             theta, SENSITIVITY, SPECIFICITY, N_CAL, N_CLUSTERS, CLUSTER_SIZE, rng=rng_clustered
         )
-        estimates.update({
-            "clustered_a": clustered_mean_interval(human_test, clusters),
-            "clustered_a_naive": wilson_interval(int(human_test.sum()), N_TEST),
-            "clustered_b": corrected_pass_rate(
-                judge_test,
-                judge_cal,
-                human_cal,
-                rng=rng_cluster_boot,
-                n_boot=N_BOOT,
-                test_clusters=clusters,
-            ),
-            "clustered_b_unclustered": corrected_pass_rate(
-                judge_test, judge_cal, human_cal, rng=rng_baseline, n_boot=N_BOOT
-            ),
-        })
+        estimates.update(
+            {
+                "clustered_a": clustered_mean_interval(human_test, clusters),
+                "clustered_a_naive": wilson_interval(int(human_test.sum()), N_TEST),
+                "clustered_b": corrected_pass_rate(
+                    judge_test,
+                    judge_cal,
+                    human_cal,
+                    rng=rng_cluster_boot,
+                    n_boot=N_BOOT,
+                    test_clusters=clusters,
+                ),
+                "clustered_b_unclustered": corrected_pass_rate(
+                    judge_test, judge_cal, human_cal, rng=rng_baseline, n_boot=N_BOOT
+                ),
+            }
+        )
         for method, estimate in estimates.items():
             covered[method] += int(estimate.low <= theta <= estimate.high)
 

@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from evalhawk.core.errors import JudgeTooWeakError
-from evalhawk.stats.correction import MIN_YOUDEN, corrected_pass_rate, rogan_gladen
+from evalhawk.stats.correction import corrected_pass_rate, rogan_gladen
 
 
 # ========================================== rogan_gladen: golden values
@@ -195,19 +195,15 @@ class TestCorrectedPassRateReproducibility:
 
     def test_corrected_pass_rate_reproducible_with_seed(self) -> None:
         """Reproducible with fixed seed."""
-        judge_test = [1, 1, 1, 0, 0]
-        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0]
-        human_cal = [1, 1, 1, 0, 0, 0, 0, 1]
+        judge_test = [1, 1, 1, 0, 0] * 10
+        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0] * 10
+        human_cal = [1, 1, 1, 0, 0, 0, 0, 1] * 10
 
         rng1 = np.random.default_rng(42)
-        est1 = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=rng1, n_boot=100
-        )
+        est1 = corrected_pass_rate(judge_test, judge_cal, human_cal, rng=rng1, n_boot=100)
 
         rng2 = np.random.default_rng(42)
-        est2 = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=rng2, n_boot=100
-        )
+        est2 = corrected_pass_rate(judge_test, judge_cal, human_cal, rng=rng2, n_boot=100)
 
         assert est1.point == est2.point
         assert est1.low == est2.low
@@ -220,42 +216,35 @@ class TestCorrectedPassRateMetadata:
 
     def test_corrected_pass_rate_method_string(self) -> None:
         """method='rogan_gladen+bootstrap'."""
-        judge_test = [1, 1, 1, 0, 0]
-        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0]
-        human_cal = [1, 1, 1, 0, 0, 0, 0, 1]
-        est = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42)
-        )
+        judge_test = [1, 1, 1, 0, 0] * 10
+        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0] * 10
+        human_cal = [1, 1, 1, 0, 0, 0, 0, 1] * 10
+        est = corrected_pass_rate(judge_test, judge_cal, human_cal, rng=np.random.default_rng(42))
         assert est.method == "rogan_gladen+bootstrap"
 
     def test_corrected_pass_rate_n_equals_len_judge_test(self) -> None:
         """n = len(judge_test)."""
-        judge_test = [1, 1, 1, 0, 0]
-        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0]
-        human_cal = [1, 1, 1, 0, 0, 0, 0, 1]
-        est = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42)
-        )
+        judge_test = [1, 1, 1, 0, 0] * 10
+        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0] * 10
+        human_cal = [1, 1, 1, 0, 0, 0, 0, 1] * 10
+        est = corrected_pass_rate(judge_test, judge_cal, human_cal, rng=np.random.default_rng(42))
         assert est.n == len(judge_test)
 
     def test_corrected_pass_rate_confidence_default(self) -> None:
         """confidence defaults to 0.95."""
-        judge_test = [1, 1, 1, 0, 0]
-        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0]
-        human_cal = [1, 1, 1, 0, 0, 0, 0, 1]
-        est = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42)
-        )
+        judge_test = [1, 1, 1, 0, 0] * 10
+        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0] * 10
+        human_cal = [1, 1, 1, 0, 0, 0, 0, 1] * 10
+        est = corrected_pass_rate(judge_test, judge_cal, human_cal, rng=np.random.default_rng(42))
         assert est.confidence == 0.95
 
     def test_corrected_pass_rate_confidence_custom(self) -> None:
         """Custom confidence is respected."""
-        judge_test = [1, 1, 1, 0, 0]
-        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0]
-        human_cal = [1, 1, 1, 0, 0, 0, 0, 1]
+        judge_test = [1, 1, 1, 0, 0] * 10
+        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0] * 10
+        human_cal = [1, 1, 1, 0, 0, 0, 0, 1] * 10
         est = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42),
-            confidence=0.90
+            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42), confidence=0.90
         )
         assert est.confidence == 0.90
 
@@ -289,22 +278,19 @@ class TestCorrectedPassRateLargeSyntheticWorld:
         # Generate judge labels based on confusion matrix
         judge_cal = np.zeros(n_cal, dtype=np.int64)
         # For human 1s: judge 1 with prob s_true (TP), judge 0 with prob 1-s_true (FN)
-        judge_cal[human_cal == 1] = (
-            rng.random(n_pos) < s_true
-        ).astype(np.int64)
+        judge_cal[human_cal == 1] = (rng.random(n_pos) < s_true).astype(np.int64)
         # For human 0s: judge 0 with prob c_true (TN), judge 1 with prob 1-c_true (FP)
-        judge_cal[human_cal == 0] = (
-            rng.random(n_neg) > c_true
-        ).astype(np.int64)
+        judge_cal[human_cal == 0] = (rng.random(n_neg) > c_true).astype(np.int64)
 
-        # Generate test data: judge passes with prob q = theta_true
+        # Test data: truth with pass rate theta_true, then the judge's flips
         n_test = 50000
-        judge_test = (rng.random(n_test) < theta_true).astype(np.int64)
+        human_test = (rng.random(n_test) < theta_true).astype(np.int64)
+        flips = rng.random(n_test)
+        judge_test = np.where(human_test == 1, flips < s_true, flips > c_true).astype(np.int64)
 
         # Correct the pass rate
         est = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=np.random.default_rng(43),
-            n_boot=2000
+            judge_test, judge_cal, human_cal, rng=np.random.default_rng(43), n_boot=2000
         )
 
         # Point should be within 0.02 of 0.7
@@ -319,12 +305,11 @@ class TestCorrectedPassRateDegenerateResamples:
 
     def test_corrected_pass_rate_few_degenerate_resamples_ok(self) -> None:
         """< 1% degenerate resamples is OK."""
-        judge_test = [1, 1, 1, 0, 0]
-        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0]
-        human_cal = [1, 1, 1, 0, 0, 0, 0, 1]
+        judge_test = [1, 1, 1, 0, 0] * 10
+        judge_cal = [1, 1, 1, 1, 0, 0, 0, 0] * 10
+        human_cal = [1, 1, 1, 0, 0, 0, 0, 1] * 10
         est = corrected_pass_rate(
-            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42),
-            n_boot=200
+            judge_test, judge_cal, human_cal, rng=np.random.default_rng(42), n_boot=200
         )
         # Should not raise
         assert est.point >= 0.0

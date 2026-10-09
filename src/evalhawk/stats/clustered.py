@@ -66,17 +66,13 @@ def cluster_robust_se(scores: npt.ArrayLike, clusters: npt.ArrayLike) -> float:
 
     # Validate at least 2 clusters
     if n_clusters < 2:
-        raise ValueError(
-            f"clusters must have at least 2 unique values, got {n_clusters!r}"
-        )
+        raise ValueError(f"clusters must have at least 2 unique values, got {n_clusters!r}")
 
     # Compute mean
     x_bar = float(np.mean(s_arr))
 
     # Compute cluster sums: Σ_{i∈g} (s_i − x̄)
-    cluster_sums = np.bincount(
-        cluster_indices.ravel(), weights=s_arr - x_bar, minlength=n_clusters
-    )
+    cluster_sums = np.bincount(cluster_indices.ravel(), weights=s_arr - x_bar, minlength=n_clusters)
 
     # Compute variance: (1/n²) · Σ_g cluster_sums[g]²
     var = float(np.sum(cluster_sums**2)) / (n**2)

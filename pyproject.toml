@@ -98,15 +98,24 @@ select = [
     "PT",  # pytest style
     "RUF", # ruff-specific
 ]
+# Docstrings use maths symbols (theta, kappa, minus sign) on purpose.
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["evalhawk"]
 
+[tool.ruff.lint.per-file-ignores]
+# match= patterns in tests are intentional regexes.
+"tests/**" = ["RUF043"]
+# Mirrors ppi_py's own Y / Yhat names.
+"tests/validation/test_ppi_oracle.py" = ["N806"]
+
 # ---------------------------------------------------------------- pyright
 [tool.pyright]
 include = ["src", "tests"]
-pythonVersion = "3.11"
 typeCheckingMode = "standard"
+# pythonVersion is inferred from the venv: numpy 2.5 types use collections.abc.Buffer
+# (Python 3.12+), which pyright reports as Unknown when forced to 3.11.
 # The domain core and the statistics are held to the strictest standard.
 strict = ["src/evalhawk/core", "src/evalhawk/stats"]
 venvPath = "."

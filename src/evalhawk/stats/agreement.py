@@ -91,10 +91,10 @@ def confusion(human: npt.ArrayLike, judge: npt.ArrayLike) -> Confusion:
     judge_arr = as_binary("judge", judge)
     check_same_length("human", human_arr, "judge", judge_arr)
 
-    tp = int(np.sum((human_arr == 1) & (judge_arr == 1)))
-    fn = int(np.sum((human_arr == 1) & (judge_arr == 0)))
-    fp = int(np.sum((human_arr == 0) & (judge_arr == 1)))
-    tn = int(np.sum((human_arr == 0) & (judge_arr == 0)))
+    tp = int(np.count_nonzero((human_arr == 1) & (judge_arr == 1)))
+    fn = int(np.count_nonzero((human_arr == 1) & (judge_arr == 0)))
+    fp = int(np.count_nonzero((human_arr == 0) & (judge_arr == 1)))
+    tn = int(np.count_nonzero((human_arr == 0) & (judge_arr == 0)))
 
     return Confusion(tp=tp, fn=fn, fp=fp, tn=tn)
 
@@ -119,8 +119,7 @@ def sensitivity(c: Confusion, *, confidence: float = 0.95) -> Estimate:
     n_pass = c.tp + c.fn
     if n_pass == 0:
         raise ValueError(
-            "human_cal has no PASS items, so sensitivity is undefined; "
-            "label more passing examples"
+            "human_cal has no PASS items, so sensitivity is undefined; label more passing examples"
         )
 
     return wilson_interval(c.tp, n_pass, confidence=confidence)
@@ -146,8 +145,7 @@ def specificity(c: Confusion, *, confidence: float = 0.95) -> Estimate:
     n_fail = c.tn + c.fp
     if n_fail == 0:
         raise ValueError(
-            "human_cal has no FAIL items, so specificity is undefined; "
-            "label more failing examples"
+            "human_cal has no FAIL items, so specificity is undefined; label more failing examples"
         )
 
     return wilson_interval(c.tn, n_fail, confidence=confidence)
@@ -204,8 +202,7 @@ def cohen_kappa(
 
     if p_e >= 1.0:
         raise ValueError(
-            "both raters constant and identical, so expected agreement is 1 "
-            "and kappa is undefined"
+            "both raters constant and identical, so expected agreement is 1 and kappa is undefined"
         )
 
     observed_kappa = (p_o - p_e) / (1 - p_e)

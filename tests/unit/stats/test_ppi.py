@@ -54,7 +54,7 @@ class TestPPIMean:
         with pytest.raises(ValueError, match="n must be"):
             ppi_mean(y_labeled, yhat_labeled, yhat_unlabeled)
 
-    def test_error_N_equals_1(self) -> None:
+    def test_error_unlabeled_size_equals_1(self) -> None:
         """Error: N < 2."""
         y_labeled = np.array([1.0, 0.0])
         yhat_labeled = np.array([1.0, 1.0])

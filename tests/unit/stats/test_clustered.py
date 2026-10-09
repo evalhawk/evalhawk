@@ -59,7 +59,7 @@ class TestClusterRobustSE:
         s = np.array([1.0, 2.0, 3.0])
         clusters = np.array([0, 0, 0])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="at least 2"):
             cluster_robust_se(s, clusters)
 
     def test_returns_float(self) -> None:
@@ -114,7 +114,7 @@ class TestClusteredMeanInterval:
         s = np.array([1.0, 2.0, 3.0])
         clusters = np.array([0, 0, 0])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="at least 2"):
             clustered_mean_interval(s, clusters)
 
     def test_confidence_parameter(self) -> None:
@@ -138,12 +138,8 @@ class TestClusterBootstrap:
         values = np.array([1.0, 0.0, 1.0, 1.0, 0.0, 0.0])
         clusters = np.array([0, 0, 1, 1, 2, 2])
 
-        first = cluster_bootstrap_means(
-            values, clusters, rng=np.random.default_rng(7), n_boot=250
-        )
-        second = cluster_bootstrap_means(
-            values, clusters, rng=np.random.default_rng(7), n_boot=250
-        )
+        first = cluster_bootstrap_means(values, clusters, rng=np.random.default_rng(7), n_boot=250)
+        second = cluster_bootstrap_means(values, clusters, rng=np.random.default_rng(7), n_boot=250)
 
         assert first.shape == (250,)
         assert np.array_equal(first, second)
@@ -151,9 +147,7 @@ class TestClusterBootstrap:
     def test_single_cluster_raises(self) -> None:
         """A single cluster cannot be resampled."""
         with pytest.raises(ValueError, match="at least 2"):
-            cluster_bootstrap_means(
-                [1.0, 0.0], [0, 0], rng=np.random.default_rng(1), n_boot=100
-            )
+            cluster_bootstrap_means([1.0, 0.0], [0, 0], rng=np.random.default_rng(1), n_boot=100)
 
     def test_length_mismatch_raises(self) -> None:
         """Length mismatch raises ValueError."""
@@ -180,17 +174,12 @@ class TestClusterBootstrap:
         b = rng_data.binomial(1, 0.55, size=2000)
 
         iid = paired_bootstrap(a, b, rng=np.random.default_rng(5))
-        clustered = paired_bootstrap(
-            a, b, rng=np.random.default_rng(5), clusters=np.arange(2000)
-        )
+        clustered = paired_bootstrap(a, b, rng=np.random.default_rng(5), clusters=np.arange(2000))
 
         assert clustered.width == pytest.approx(iid.width, rel=0.1)
 
     def test_paired_cluster_bootstrap_single_cluster_raises(self) -> None:
         """A single cluster raises ValueError."""
         with pytest.raises(ValueError, match="at least 2"):
-            paired_bootstrap(
-                [0, 1], [1, 1], rng=np.random.default_rng(1), clusters=[0, 0]
-            )
-
+            paired_bootstrap([0, 1], [1, 1], rng=np.random.default_rng(1), clusters=[0, 0])
 

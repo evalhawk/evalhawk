@@ -29,9 +29,7 @@ class TestPPIOracle:
         est = ppi_mean(Y, Yhat, Yhat_unlabeled)
 
         # ppi_py reference (with lam=1 for classical PPI)
-        ref_point = ppi_py.ppi_mean_pointestimate(
-            Y, Yhat, Yhat_unlabeled, lam=1
-        )
+        ref_point = ppi_py.ppi_mean_pointestimate(Y, Yhat, Yhat_unlabeled, lam=1)
 
         assert abs(est.point - ref_point) < 1e-6, (
             f"Point estimate mismatch: {est.point} vs {ref_point}"
@@ -56,16 +54,10 @@ class TestPPIOracle:
         est = ppi_mean(Y, Yhat, Yhat_unlabeled, confidence=0.95)
 
         # ppi_py reference (alpha = 1 - confidence = 0.05, lam=1)
-        ref_low, ref_high = ppi_py.ppi_mean_ci(
-            Y, Yhat, Yhat_unlabeled, alpha=1 - 0.95, lam=1
-        )
+        ref_low, ref_high = ppi_py.ppi_mean_ci(Y, Yhat, Yhat_unlabeled, alpha=1 - 0.95, lam=1)
 
-        assert abs(est.low - ref_low) < 1e-6, (
-            f"Lower bound mismatch: {est.low} vs {ref_low}"
-        )
-        assert abs(est.high - ref_high) < 1e-6, (
-            f"Upper bound mismatch: {est.high} vs {ref_high}"
-        )
+        assert abs(est.low - ref_low) < 1e-6, f"Lower bound mismatch: {est.low} vs {ref_low}"
+        assert abs(est.high - ref_high) < 1e-6, f"Upper bound mismatch: {est.high} vs {ref_high}"
 
     @pytest.mark.slow
     def test_oracle_point_estimate_seed_2(self) -> None:
@@ -85,9 +77,7 @@ class TestPPIOracle:
         est = ppi_mean(Y, Yhat, Yhat_unlabeled)
 
         # ppi_py reference
-        ref_point = ppi_py.ppi_mean_pointestimate(
-            Y, Yhat, Yhat_unlabeled, lam=1
-        )
+        ref_point = ppi_py.ppi_mean_pointestimate(Y, Yhat, Yhat_unlabeled, lam=1)
 
         assert abs(est.point - ref_point) < 1e-6
 
@@ -109,9 +99,7 @@ class TestPPIOracle:
         est = ppi_mean(Y, Yhat, Yhat_unlabeled, confidence=0.95)
 
         # ppi_py reference
-        ref_low, ref_high = ppi_py.ppi_mean_ci(
-            Y, Yhat, Yhat_unlabeled, alpha=0.05, lam=1
-        )
+        ref_low, ref_high = ppi_py.ppi_mean_ci(Y, Yhat, Yhat_unlabeled, alpha=0.05, lam=1)
 
         assert abs(est.low - ref_low) < 1e-6
         assert abs(est.high - ref_high) < 1e-6
@@ -135,9 +123,7 @@ class TestPPIOracle:
         est = ppi_mean(Y, Yhat, Yhat_unlabeled)
 
         # ppi_py reference
-        ref_point = ppi_py.ppi_mean_pointestimate(
-            Y, Yhat, Yhat_unlabeled, lam=1
-        )
+        ref_point = ppi_py.ppi_mean_pointestimate(Y, Yhat, Yhat_unlabeled, lam=1)
 
         assert abs(est.point - ref_point) < 1e-6
 
@@ -160,9 +146,7 @@ class TestPPIOracle:
         est = ppi_mean(Y, Yhat, Yhat_unlabeled, confidence=0.95)
 
         # ppi_py reference
-        ref_low, ref_high = ppi_py.ppi_mean_ci(
-            Y, Yhat, Yhat_unlabeled, alpha=0.05, lam=1
-        )
+        ref_low, ref_high = ppi_py.ppi_mean_ci(Y, Yhat, Yhat_unlabeled, alpha=0.05, lam=1)
 
         assert abs(est.low - ref_low) < 1e-6
         assert abs(est.high - ref_high) < 1e-6

@@ -56,7 +56,7 @@ class TestKappaIntervalProperties:
             est = cohen_kappa(human, judge, rng=np.random.default_rng(42), n_boot=100)
         except ValueError:
             return  # kappa undefined or too many degenerate resamples for this sample
-        assert -1.0 <= est.low
+        assert est.low >= -1.0
         assert est.high <= 1.0
 
 

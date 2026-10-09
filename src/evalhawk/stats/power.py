@@ -60,8 +60,7 @@ def required_n_paired(
     delta_sq = delta**2
     if delta_sq >= p_discordant:
         raise ValueError(
-            f"Δ² must be < p_discordant, got Δ²={delta_sq!r}, "
-            f"p_discordant={p_discordant!r}"
+            f"Δ² must be < p_discordant, got Δ²={delta_sq!r}, p_discordant={p_discordant!r}"
         )
 
     # Validate alpha

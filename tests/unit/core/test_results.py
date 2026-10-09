@@ -10,7 +10,7 @@ import math
 
 import pytest
 
-from evalhawk.core.results import Comparison, Decision, Estimate
+from evalhawk.core.results import Comparison, Estimate
 
 # ================================================================ fixtures
 BASELINE = Estimate(
@@ -65,12 +65,8 @@ def test_n_zero_is_allowed() -> None:
 
 def test_unknown_rate_bounds_are_inclusive() -> None:
     """unknown_rate=0.0 and unknown_rate=1.0 are both allowed."""
-    est_zero = Estimate(
-        point=0.5, low=0.4, high=0.6, n=10, method="test", unknown_rate=0.0
-    )
-    est_one = Estimate(
-        point=0.5, low=0.4, high=0.6, n=10, method="test", unknown_rate=1.0
-    )
+    est_zero = Estimate(point=0.5, low=0.4, high=0.6, n=10, method="test", unknown_rate=0.0)
+    est_one = Estimate(point=0.5, low=0.4, high=0.6, n=10, method="test", unknown_rate=1.0)
     assert est_zero.unknown_rate == 0.0
     assert est_one.unknown_rate == 1.0
 
@@ -156,12 +152,8 @@ def test_positional_arguments_are_rejected() -> None:
 # ================================================================ equality and hashing
 def test_equal_estimates_compare_equal_and_hash_equal() -> None:
     """Two Estimates with the same values are equal and have the same hash."""
-    est1 = Estimate(
-        point=0.82, low=0.7333, high=0.8830, n=100, method="wilson"
-    )
-    est2 = Estimate(
-        point=0.82, low=0.7333, high=0.8830, n=100, method="wilson"
-    )
+    est1 = Estimate(point=0.82, low=0.7333, high=0.8830, n=100, method="wilson")
+    est2 = Estimate(point=0.82, low=0.7333, high=0.8830, n=100, method="wilson")
     assert est1 == est2
     assert hash(est1) == hash(est2)
 
@@ -185,8 +177,7 @@ def test_str_shows_unknown_rate_as_percentage() -> None:
         unknown_rate=0.125,
     )
     result = str(est)
-    # Should end with "unknown=12.5%)"
-
+    assert "unknown=12.5%)" in result
 
 
 # ================================================================ Comparison (S4)
@@ -195,12 +186,8 @@ class TestComparison:
 
     def test_comparison_valid_all_fields(self) -> None:
         """Valid Comparison is created with all required fields."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         assert comp.difference is diff
         assert comp.p_value == 0.210
         assert comp.b == 12
@@ -209,23 +196,15 @@ class TestComparison:
 
     def test_comparison_frozen(self) -> None:
         """Comparison is frozen."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         with pytest.raises(dataclasses.FrozenInstanceError):
             comp.p_value = 0.3  # type: ignore[misc]
 
     def test_comparison_slots(self) -> None:
         """Comparison uses slots."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         with pytest.raises((AttributeError, TypeError)):
             comp.custom_field = "value"  # type: ignore[attr-defined]
 
@@ -243,22 +222,14 @@ class TestComparison:
         self, p_value: float, b: int, c: int, match_field: str
     ) -> None:
         """Invalid field values raise ValueError."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
         with pytest.raises(ValueError, match=match_field):
-            Comparison(
-                difference=diff, p_value=p_value, b=b, c=c, decision="INCONCLUSIVE"
-            )
+            Comparison(difference=diff, p_value=p_value, b=b, c=c, decision="INCONCLUSIVE")
 
     def test_comparison_str_format_signed(self) -> None:
         """__str__ uses signed format: +0.040 [-0.010, +0.090]."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         result = str(comp)
         # Exact format: "+0.040 [-0.010, +0.090] INCONCLUSIVE (p=0.210, b=12, c=30)"
         assert "+0.040" in result
@@ -270,14 +241,9 @@ class TestComparison:
 
     def test_comparison_str_negative_difference(self) -> None:
         """__str__ formats negative differences with minus sign."""
-        diff = Estimate(
-            point=-0.04, low=-0.09, high=0.01, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.050, b=30, c=12, decision="WORSE"
-        )
+        diff = Estimate(point=-0.04, low=-0.09, high=0.01, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.050, b=30, c=12, decision="WORSE")
         result = str(comp)
         assert "-0.040" in result
         assert "[-0.090, +0.010]" in result
 
-    assert "unknown=12.5%)" in result

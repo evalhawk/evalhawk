@@ -5,16 +5,23 @@ estimating the difference, and decision logic based on confidence intervals.
 """
 
 import math
+from typing import SupportsIndex
 
 import numpy as np
 import numpy.typing as npt
 
 from evalhawk.core.results import Decision, Estimate
-from evalhawk.stats._checks import as_binary, check_confidence, check_n_boot, check_same_length
+from evalhawk.stats._checks import (
+    as_binary,
+    as_count,
+    check_confidence,
+    check_n_boot,
+    check_same_length,
+)
 from evalhawk.stats.clustered import cluster_bootstrap_means
 
 
-def mcnemar_exact(b: int, c: int) -> float:
+def mcnemar_exact(b: SupportsIndex, c: SupportsIndex) -> float:
     """Two-sided exact binomial test for paired data (McNemar 1947).
 
     Given b = count of (v1=PASS, v2=FAIL) and c = count of (v1=FAIL, v2=PASS),
@@ -23,8 +30,8 @@ def mcnemar_exact(b: int, c: int) -> float:
     arithmetic for numerical stability.
 
     Args:
-        b: Count of v1 PASS, v2 FAIL pairs. Must be a non-negative int (not bool).
-        c: Count of v1 FAIL, v2 PASS pairs. Must be a non-negative int (not bool).
+        b: Count of v1 PASS, v2 FAIL pairs (a non-negative Python or NumPy integer).
+        c: Count of v1 FAIL, v2 PASS pairs (a non-negative Python or NumPy integer).
 
     Returns:
         The two-sided p-value, in [0, 1].
@@ -45,13 +52,9 @@ def mcnemar_exact(b: int, c: int) -> float:
         >>> mcnemar_exact(7, 7)
         1.0
     """
-    # Validate inputs
-    if isinstance(b, bool) or isinstance(c, bool):
-        raise ValueError(f"b and c must be non-negative ints (not bool); got b={b!r}, c={c!r}")
-    if not isinstance(b, int) or not isinstance(c, int):
-        raise ValueError(
-            f"b and c must be ints; got b={type(b).__name__}, c={type(c).__name__}"
-        )
+    # Validate inputs (Python or NumPy integers are fine; bool and float are not)
+    b = as_count("b", b)
+    c = as_count("c", c)
     if b < 0:
         raise ValueError(f"b must be >= 0, got {b!r}")
     if c < 0:
@@ -71,7 +74,7 @@ def mcnemar_exact(b: int, c: int) -> float:
     # = log(binom(n, i)) - n * log(2)
 
     # Store log-space terms
-    log_t = []
+    log_t: list[float] = []
 
     # i = 0: log(binom(n, 0)) - n*log(2) = 0 - n*log(2) = -n*log(2)
     log_t.append(-n * math.log(2))

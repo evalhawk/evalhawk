@@ -46,9 +46,7 @@ class TestCorrectionBenchmark:
         for _ in range(5):
             rng_boot = np.random.default_rng(43)
             start = time.perf_counter()
-            corrected_pass_rate(
-                judge_test, judge_cal, human_cal, rng=rng_boot, n_boot=n_boot
-            )
+            corrected_pass_rate(judge_test, judge_cal, human_cal, rng=rng_boot, n_boot=n_boot)
             elapsed = time.perf_counter() - start
             times.append(elapsed)
 

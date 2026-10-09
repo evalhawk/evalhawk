@@ -5,12 +5,13 @@ Wald interval for extreme proportions and always stays within [0, 1].
 """
 
 import math
+from typing import SupportsIndex
 
 from evalhawk.core.results import Estimate
-from evalhawk.stats._checks import check_confidence, z_value
+from evalhawk.stats._checks import as_count, check_confidence, z_value
 
 
-def wilson_interval(k: int, n: int, *, confidence: float = 0.95) -> Estimate:
+def wilson_interval(k: SupportsIndex, n: SupportsIndex, *, confidence: float = 0.95) -> Estimate:
     """Compute a Wilson score confidence interval for a proportion.
 
     The Wilson interval is more accurate than Wald for extreme proportions and
@@ -27,8 +28,8 @@ def wilson_interval(k: int, n: int, *, confidence: float = 0.95) -> Estimate:
         high = min(1, centre + margin)
 
     Args:
-        k: Number of successes (must be a non-negative integer).
-        n: Total number of trials (must be a positive integer).
+        k: Number of successes (a non-negative Python or NumPy integer).
+        n: Total number of trials (a positive Python or NumPy integer).
         confidence: Confidence level (e.g., 0.95 for 95%). Must be in (0, 1).
             Defaults to 0.95.
 
@@ -36,7 +37,7 @@ def wilson_interval(k: int, n: int, *, confidence: float = 0.95) -> Estimate:
         An Estimate with the point estimate, interval bounds, and metadata.
 
     Raises:
-        ValueError: If k or n is a bool or not an int, or if k, n, or confidence are
+        ValueError: If k or n is a bool or not integer-like, or if k, n, or confidence are
             out of valid ranges.
 
     References:
@@ -51,15 +52,9 @@ def wilson_interval(k: int, n: int, *, confidence: float = 0.95) -> Estimate:
         >>> print(est)
         0.820 [0.733, 0.883] (wilson, n=100, unknown=0.0%)
     """
-    # Validate k, n are int but not bool
-    if isinstance(k, bool):
-        raise ValueError(f"k must be int, not bool, got {k!r}")
-    if isinstance(n, bool):
-        raise ValueError(f"n must be int, not bool, got {n!r}")
-    if not isinstance(k, int):
-        raise ValueError(f"k must be int, got {type(k).__name__}")
-    if not isinstance(n, int):
-        raise ValueError(f"n must be int, got {type(n).__name__}")
+    # Validate k, n are integer-like (Python or NumPy ints) but not bool
+    k = as_count("k", k)
+    n = as_count("n", n)
 
     # Validate k and n ranges
     if n < 1:
@@ -88,9 +83,9 @@ def wilson_interval(k: int, n: int, *, confidence: float = 0.95) -> Estimate:
     variance_term = p * (1 - p) / n + z_sq / (4 * n * n)
     half = (z / denom) * math.sqrt(variance_term)
 
-    # Compute bounds, clamping float noise only
-    low = max(0.0, centre - half)
-    high = min(1.0, centre + half)
+    # Bounds are exactly 0 at k = 0 and 1 at k = n; float noise must not push them past the point
+    low = 0.0 if k == 0 else max(0.0, centre - half)
+    high = 1.0 if k == n else min(1.0, centre + half)
 
     return Estimate(
         point=p,

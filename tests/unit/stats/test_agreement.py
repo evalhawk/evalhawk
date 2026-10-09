@@ -260,7 +260,7 @@ class TestCohenKappa:
         rng = np.random.default_rng(42)
         est = cohen_kappa(human, judge, rng=rng)
         assert est.low <= est.high
-        assert -1.0 <= est.low
+        assert est.low >= -1.0
         assert est.high <= 1.0
 
     def test_kappa_both_constant_identical_raises(self) -> None:

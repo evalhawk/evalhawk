@@ -6,7 +6,7 @@ Tests for McNemar exact test, paired bootstrap, decision logic, and Comparison d
 import numpy as np
 import pytest
 
-from evalhawk.core.results import Comparison, Decision, Estimate
+from evalhawk.core.results import Comparison, Estimate
 from evalhawk.stats.compare import decide, mcnemar_exact, paired_bootstrap
 
 
@@ -58,6 +58,15 @@ class TestMcnemarExact:
         """Bool b raises ValueError."""
         with pytest.raises(ValueError, match="b"):
             mcnemar_exact(True, 5)  # type: ignore[arg-type]
+
+    def test_mcnemar_exact_accepts_numpy_integers(self) -> None:
+        """np.int64 counts give the same p-value as Python ints."""
+        assert mcnemar_exact(np.int64(12), np.int64(30)) == mcnemar_exact(12, 30)
+
+    def test_mcnemar_exact_rejects_float(self) -> None:
+        """Float counts such as 5.0 raise ValueError."""
+        with pytest.raises(ValueError, match="must be int"):
+            mcnemar_exact(5.0, 3)  # type: ignore[arg-type]
 
     def test_mcnemar_exact_rejects_bool_c(self) -> None:
         """Bool c raises ValueError."""
@@ -143,39 +152,28 @@ class TestDecide:
 
     def test_decide_better(self) -> None:
         """low > 0 returns BETTER."""
-        diff = Estimate(
-            point=0.1, low=0.05, high=0.15, n=100, method="test"
-        )
+        diff = Estimate(point=0.1, low=0.05, high=0.15, n=100, method="test")
         assert decide(diff) == "BETTER"
 
     def test_decide_worse(self) -> None:
         """high < 0 returns WORSE."""
-        diff = Estimate(
-            point=-0.1, low=-0.15, high=-0.05, n=100, method="test"
-        )
+        diff = Estimate(point=-0.1, low=-0.15, high=-0.05, n=100, method="test")
         assert decide(diff) == "WORSE"
 
     def test_decide_inconclusive(self) -> None:
         """Interval spanning 0 returns INCONCLUSIVE."""
-        diff = Estimate(
-            point=0.0, low=-0.1, high=0.1, n=100, method="test"
-        )
+        diff = Estimate(point=0.0, low=-0.1, high=0.1, n=100, method="test")
         assert decide(diff) == "INCONCLUSIVE"
 
     def test_decide_low_equals_zero(self) -> None:
         """low == 0 returns INCONCLUSIVE."""
-        diff = Estimate(
-            point=0.05, low=0.0, high=0.1, n=100, method="test"
-        )
+        diff = Estimate(point=0.05, low=0.0, high=0.1, n=100, method="test")
         assert decide(diff) == "INCONCLUSIVE"
 
     def test_decide_high_equals_zero(self) -> None:
         """high == 0 returns INCONCLUSIVE."""
-        diff = Estimate(
-            point=-0.05, low=-0.1, high=0.0, n=100, method="test"
-        )
+        diff = Estimate(point=-0.05, low=-0.1, high=0.0, n=100, method="test")
         assert decide(diff) == "INCONCLUSIVE"
-
 
 
 # ================================================================ Comparison class
@@ -184,12 +182,8 @@ class TestComparison:
 
     def test_comparison_valid(self) -> None:
         """Valid Comparison is created."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         assert comp.difference is diff
         assert comp.p_value == 0.210
         assert comp.b == 12
@@ -198,74 +192,46 @@ class TestComparison:
 
     def test_comparison_frozen(self) -> None:
         """Comparison is frozen."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
-        with pytest.raises(Exception):  # FrozenInstanceError or AttributeError
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
+        with pytest.raises(AttributeError):  # FrozenInstanceError subclasses AttributeError
             comp.p_value = 0.3  # type: ignore[misc]
 
     def test_comparison_slots(self) -> None:
         """Comparison uses slots."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         with pytest.raises((AttributeError, TypeError)):
             comp.custom_field = "value"  # type: ignore[attr-defined]
 
     def test_comparison_invalid_p_value_too_high(self) -> None:
         """p_value > 1 raises ValueError."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
         with pytest.raises(ValueError, match="p_value"):
-            Comparison(
-                difference=diff, p_value=1.5, b=12, c=30, decision="INCONCLUSIVE"
-            )
+            Comparison(difference=diff, p_value=1.5, b=12, c=30, decision="INCONCLUSIVE")
 
     def test_comparison_invalid_p_value_negative(self) -> None:
         """p_value < 0 raises ValueError."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
         with pytest.raises(ValueError, match="p_value"):
-            Comparison(
-                difference=diff, p_value=-0.1, b=12, c=30, decision="INCONCLUSIVE"
-            )
+            Comparison(difference=diff, p_value=-0.1, b=12, c=30, decision="INCONCLUSIVE")
 
     def test_comparison_invalid_b_negative(self) -> None:
         """b < 0 raises ValueError."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
         with pytest.raises(ValueError, match="b"):
-            Comparison(
-                difference=diff, p_value=0.210, b=-1, c=30, decision="INCONCLUSIVE"
-            )
+            Comparison(difference=diff, p_value=0.210, b=-1, c=30, decision="INCONCLUSIVE")
 
     def test_comparison_invalid_c_negative(self) -> None:
         """c < 0 raises ValueError."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
         with pytest.raises(ValueError, match="c"):
-            Comparison(
-                difference=diff, p_value=0.210, b=12, c=-1, decision="INCONCLUSIVE"
-            )
+            Comparison(difference=diff, p_value=0.210, b=12, c=-1, decision="INCONCLUSIVE")
 
     def test_comparison_str_format_signed(self) -> None:
         """__str__ uses signed format."""
-        diff = Estimate(
-            point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE"
-        )
+        diff = Estimate(point=0.04, low=-0.01, high=0.09, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.210, b=12, c=30, decision="INCONCLUSIVE")
         result = str(comp)
         # Expected: "+0.040 [-0.010, +0.090] INCONCLUSIVE (p=0.210, b=12, c=30)"
         assert "+0.040" in result
@@ -277,12 +243,8 @@ class TestComparison:
 
     def test_comparison_str_negative_difference(self) -> None:
         """__str__ formats negative differences correctly."""
-        diff = Estimate(
-            point=-0.04, low=-0.09, high=0.01, n=42, method="paired_bootstrap"
-        )
-        comp = Comparison(
-            difference=diff, p_value=0.050, b=30, c=12, decision="WORSE"
-        )
+        diff = Estimate(point=-0.04, low=-0.09, high=0.01, n=42, method="paired_bootstrap")
+        comp = Comparison(difference=diff, p_value=0.050, b=30, c=12, decision="WORSE")
         result = str(comp)
         assert "-0.040" in result
         assert "[-0.090, +0.010]" in result

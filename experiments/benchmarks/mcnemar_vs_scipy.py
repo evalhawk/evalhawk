@@ -39,7 +39,7 @@ def benchmark_mcnemar_vs_scipy(n_cases: int = 1000) -> None:
 
     # Compute relative errors
     max_rel_error = 0.0
-    for our, sp in zip(our_results, scipy_results):
+    for our, sp in zip(our_results, scipy_results, strict=True):
         if sp > 0:
             rel_error = abs(our - sp) / sp
             max_rel_error = max(max_rel_error, rel_error)
