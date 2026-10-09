@@ -1,3 +1,4 @@
+	
 # Requirements
 
 This page lists **what** evalhawk must do (functional requirements) and **how well** it
@@ -92,7 +93,7 @@ Stages refer to the build order in [ADR-0007](decisions/0007-build-order.md) and
 | NFR-11 | **Security** | API keys are read only from environment variables named in config; they never reach the database, logs or manifests. TLS verification is on by default | A test searches the DB and logs for a sentinel key |
 | NFR-12 | **Privacy** | No telemetry. Data is sent only to endpoints the user configured. An optional `redact` hook runs before any external call | Review; unit test on the hook |
 | NFR-13 | **Portability** | Windows, Linux and macOS; Python 3.11–3.13; no GPU, no torch, no compiler | CI matrix |
-| NFR-14 | **Lean install** | The core install needs only pydantic, numpy, scipy and typer. Everything else is an optional extra, imported lazily; `import evalhawk` never fails because an extra is missing | Test in a core-only environment |
+| NFR-14 | **Lean install** | The core install needs only pydantic, numpy and typer (SciPy is a test-only dependency, ADR-0009). Everything else is an optional extra, imported lazily; `import evalhawk` never fails because an extra is missing | Test in a core-only environment |
 | NFR-15 | **Usability** | 100 labels take under 15 minutes. Every error message says what went wrong, where, and how to fix it | Timed session; review |
 | NFR-16 | **Maintainability** | pyright strict on `core/` and `stats/`; test coverage ≥ 90% on `core/` and `stats/`, ≥ 80% overall; layer contracts pass | CI |
 | NFR-17 | **Documentation** | Every public function and class has a docstring; every user-visible change has a CHANGELOG entry; the docs build has no warnings | CI (`zensical build --strict`), PR template |

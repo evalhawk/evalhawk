@@ -110,7 +110,7 @@ root, so both assistants follow the same rules.
 ## 10. Time and leaving
 
 1. Each of us writes down roughly how many hours per week we can give, and updates it when
-   it changes: Karthik: ___ h/week · Krishna: ___ h/week.
+   it changes: Karthik: ___ h/week · Krishna: 10 h/week.
 2. Either of us may step back at any time. Please give notice and hand over open work
    (push your branch, update the issue).
 3. Someone who leaves **stays credited** as a maintainer and author. The code stays MIT.
@@ -130,4 +130,4 @@ Open a PR that edits this page. It changes when both maintainers approve.
 ## Sign-off
 
 - [ ] Venkata Sai Karthik approved the PR adding this agreement
-- [ ] Krishna Nandimandalam approved the PR adding this agreement
+- [x] Krishna Nandimandalam approved the PR adding this agreement

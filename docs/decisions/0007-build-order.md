@@ -1,6 +1,6 @@
 # ADR-0007: Build the statistics core and storage as parallel tracks
 
-- **Status:** Proposed (awaiting approval by both maintainers)
+- **Status:** Accepted (2026-10-09)
 - **Date:** 2026-09-27, revised 2026-09-29 for two maintainers
 - **Deciders:** Venkata Sai Karthik, Krishna Nandimandalam
 

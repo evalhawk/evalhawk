@@ -30,6 +30,6 @@ Do **not** write one for easily reversible choices (CLI colours, internal helper
 | [0004](0004-protocols-and-helper-base-classes.md) | Protocols are the contract; helper base classes are optional | Accepted |
 | [0005](0005-package-layout.md) | Package layout and enforced layer rules | Accepted |
 | [0006](0006-content-addressed-ids-and-splits.md) | Content-addressed IDs and immutable hash-based splits | Accepted |
-| [0007](0007-build-order.md) | Build the statistics core and storage as parallel tracks | Proposed |
+| [0007](0007-build-order.md) | Build the statistics core and storage as parallel tracks | Accepted |
 | [0008](0008-zensical-docs.md) | Zensical for the documentation site | Accepted |
-| [0009](0009-lean-runtime-no-scipy.md) | Lean runtime: NumPy and the standard library, no SciPy | Proposed |
+| [0009](0009-lean-runtime-no-scipy.md) | Lean runtime: NumPy and the standard library, no SciPy | Accepted |

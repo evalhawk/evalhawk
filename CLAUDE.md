@@ -45,7 +45,7 @@ Two equal co-owners, both using Claude Code with this file:
 
 ## Stack
 
-Python ≥3.11 (dev 3.12) · uv · hatchling · Pydantic v2 · NumPy · SciPy (proposed to become test-only, ADR-0009) · Typer · stdlib sqlite3 · TOML config.
+Python ≥3.11 (dev 3.12) · uv · hatchling · Pydantic v2 · NumPy · SciPy (test only, ADR-0009) · Typer · stdlib sqlite3 · TOML config.
 Dev: pytest, pytest-cov, hypothesis, ruff, pyright (strict on core/ and stats/), pre-commit.
 Docs: **Zensical** (`zensical.toml`). Material for MkDocs reaches end-of-life in Nov 2026, so don't use it.
 Planned extras: `[llm]` openai · `[jev]` typesafe-sdk · `[ui]` fastapi+uvicorn+jinja2+vendored htmx 2 · `[cluster]` fastembed+scikit-learn · `[langfuse]` · `[otel]`. Dev-only oracle: `ppi-python`.

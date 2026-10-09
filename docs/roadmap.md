@@ -39,7 +39,7 @@ Core interfaces (Python `Protocol`s): `Judge`, `TraceSource`, `Store`, `Target`.
 
 ## 3. Tech stack
 
-**Core install (kept tiny):** Python 3.11+ (develop on 3.12) · Pydantic v2 · NumPy · SciPy · Typer (includes Rich) · `sqlite3` (standard library) · TOML config via `tomllib` (standard library)
+**Core install (kept tiny):** Python 3.11+ (develop on 3.12) · Pydantic v2 · NumPy · Typer (includes Rich) · `sqlite3` (standard library) · TOML config via `tomllib` (standard library)
 
 **Optional extras:**
 
@@ -51,7 +51,7 @@ Core interfaces (Python `Protocol`s): `Judge`, `TraceSource`, `Store`, `Target`.
 | `[cluster]` | `fastembed`, `scikit-learn` | Failure clustering (ONNX, no torch) |
 | `[langfuse]`, `[otel]` | adapters | Import traces |
 
-**Dev only:** uv · hatchling · pytest · hypothesis · ruff · pyright · import-linter (layer rules) · pre-commit · GitHub Actions · Zensical (docs site, [ADR-0008](decisions/0008-zensical-docs.md)) · `ppi-python` (reference implementation to check our math against)
+**Dev only:** uv · hatchling · pytest · hypothesis · ruff · pyright · import-linter (layer rules) · pre-commit · GitHub Actions · Zensical (docs site, [ADR-0008](decisions/0008-zensical-docs.md)) · SciPy (tests only, ADR-0009) · `ppi-python` (reference implementation to check our math against)
 
 **Free compute:** Ollama (local) · Groq / Google AI Studio free tiers. Google's free tier may use submitted data, so don't send private data through it.
 

@@ -56,7 +56,7 @@ For the reasoning behind the structure, see [Design patterns and intuitions](../
   `model_config = ConfigDict(frozen=True, extra="forbid")`. Immutable, and unknown fields
   are rejected.
 - **Statistics results** (`core/results.py`): frozen dataclasses with `slots=True`, validated
-  in `__post_init__` (for example `low ≤ point ≤ high`). `stats/` never imports Pydantic.
+  in `__post_init__` (for example `low ≤ high`, finite values). `stats/` never imports Pydantic.
 - Models hold data and validation only. No I/O methods (`.save()`, `.fetch()`) on models.
 
 ## 5. Statistics code (`stats/`)
@@ -99,7 +99,7 @@ For the reasoning behind the structure, see [Design patterns and intuitions](../
 
 ## 8. Dependencies
 
-- Core runtime dependencies are pydantic, numpy, scipy and typer. Adding one **requires an ADR**.
+- Core runtime dependencies are pydantic, numpy and typer. Adding one **requires an ADR**.
 - Integrations go in optional extras (`[llm]`, `[jev]`, `[ui]`, `[cluster]`, `[langfuse]`,
   `[otel]`), added in the phase that first needs them.
 - Dev tools go in dependency groups (`dev`, `docs`). Exact versions are pinned by `uv.lock`,
