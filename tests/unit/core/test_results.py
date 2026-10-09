@@ -246,4 +246,3 @@ class TestComparison:
         result = str(comp)
         assert "-0.040" in result
         assert "[-0.090, +0.010]" in result
-

@@ -50,4 +50,3 @@ def test_narrowing_property(kn: tuple[int, int]) -> None:
     est_small = wilson_interval(k, n)
     est_large = wilson_interval(10 * k, 10 * n)
     assert est_large.width < est_small.width
-

@@ -76,5 +76,3 @@ class TestConfusionOrderIndependence:
         c2 = confusion([p[0] for p in shuffled], [p[1] for p in shuffled])
 
         assert c1 == c2
-
-

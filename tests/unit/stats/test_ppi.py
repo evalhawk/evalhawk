@@ -117,9 +117,7 @@ class TestPPIMean:
         yhat_unlabeled = rng.uniform(0.3, 0.7, size=500)
 
         est_95 = ppi_mean(y_labeled, yhat_labeled, yhat_unlabeled)
-        est_90 = ppi_mean(
-            y_labeled, yhat_labeled, yhat_unlabeled, confidence=0.90
-        )
+        est_90 = ppi_mean(y_labeled, yhat_labeled, yhat_unlabeled, confidence=0.90)
 
         # 90% CI should be narrower than 95% CI
         assert est_90.width < est_95.width

@@ -182,4 +182,3 @@ class TestClusterBootstrap:
         """A single cluster raises ValueError."""
         with pytest.raises(ValueError, match="at least 2"):
             paired_bootstrap([0, 1], [1, 1], rng=np.random.default_rng(1), clusters=[0, 0])
-

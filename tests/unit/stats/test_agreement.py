@@ -326,5 +326,3 @@ class TestAsBinaryErrors:
         """Values other than 0/1 raise ValueError."""
         with pytest.raises(ValueError, match="must contain only 0, 1"):
             confusion([1, 2], [1, 0])
-
-

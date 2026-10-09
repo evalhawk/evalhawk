@@ -30,9 +30,7 @@ def benchmark_mcnemar_vs_scipy(n_cases: int = 1000) -> None:
     # Benchmark scipy
     start = time.perf_counter()
     scipy_results = [
-        scipy.stats.binomtest(
-            min(int(b), int(c)), int(b) + int(c), 0.5
-        ).pvalue
+        scipy.stats.binomtest(min(int(b), int(c)), int(b) + int(c), 0.5).pvalue
         for b, c in b_c_pairs
     ]
     scipy_time = time.perf_counter() - start

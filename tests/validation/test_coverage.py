@@ -156,5 +156,3 @@ def test_intervals_cover_known_truth_at_expected_rate(
         assert baseline_coverage < limit, (
             f"{method}, theta={theta}: unclustered coverage={baseline_coverage:.4f}"
         )
-
-
