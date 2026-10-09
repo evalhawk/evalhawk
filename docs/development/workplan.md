@@ -352,4 +352,4 @@ judge report card and a corrected pass rate with an error range.
 |---|---|---|
 | Day 1 | Accept the org invite as Owner, clone, set up, first PR (approve the agreement + ADRs 0007, 0009) | Phase 0 wrap-up: repo, settings, PyPI |
 | Day 2 | **J1 together** | **J1 together** |
-| Days 3–7 | D1 → D2 | S1 → S2 |
+| Days 3–7 | D1 → D2 (D1 can start on day 1) | S1 → S2 |
