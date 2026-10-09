@@ -9,8 +9,8 @@
 
 | Name | GitHub | Current track |
 |---|---|---|
-| Venkata Sai Karthik | [@EVSGoud](https://github.com/EVSGoud) | Track 1: statistics engine |
-| Krishna Nandimandalam | [@kclectic0501](https://github.com/kclectic0501) | Track 2: data backbone |
+| Venkata Sai Karthik | [@EVSGoud](https://github.com/EVSGoud) | Track 2: data backbone |
+| Krishna Nandimandalam | [@kclectic0501](https://github.com/kclectic0501) | Track 1: statistics engine |
 
 Tracks are defined in the [work plan](workplan.md).
 
