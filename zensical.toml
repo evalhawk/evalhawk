@@ -48,6 +48,9 @@ nav = [
       { "0007 Parallel tracks" = "decisions/0007-build-order.md" },
       { "0008 Zensical docs" = "decisions/0008-zensical-docs.md" },
       { "0009 Lean runtime" = "decisions/0009-lean-runtime-no-scipy.md" },
+      { "0010 Data backbone contracts" = "decisions/0010-data-backbone-contracts.md" },
+      { "0011 Offline report contract" = "decisions/0011-offline-report-contract.md" },
+      { "0012 Rich CLI tables" = "decisions/0012-rich-cli-tables.md" },
       { "ADR template" = "decisions/0000-template.md" },
     ] },
   ] },
@@ -57,6 +60,8 @@ nav = [
     { "Engineering standards" = "development/standards.md" },
     { "Dev log" = [
       { "Overview" = "devlog/index.md" },
+      { "D2-D7 Data backbone" = "devlog/2026-10-11-D2-D7-data-backbone.md" },
+      { "X1-X3 Offline demo" = "devlog/2026-10-11-X1-X3-offline-demo.md" },
       { "S7 · Coverage simulation" = "devlog/2026-10-09-S7-coverage-simulation.md" },
       { "S6 · Clustered errors and power" = "devlog/2026-10-09-S6-clustered-and-power.md" },
       { "S5 · PPI correction" = "devlog/2026-10-09-S5-ppi.md" },

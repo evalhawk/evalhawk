@@ -11,6 +11,7 @@ ID already stored in users' databases, so the exact output is frozen by golden t
 
 import hashlib
 import json
+import unicodedata
 from typing import Final, cast
 
 MAX_DEPTH: Final = 100
@@ -23,7 +24,7 @@ limit (about 1,000, and lower when called from deep inside other code).
 
 
 def normalize_text(text: str) -> str:
-    """Convert Windows (``\\r\\n``) and old Mac (``\\r``) line endings to ``\\n``.
+    """Normalize Unicode to NFC and CRLF/CR line endings to LF.
 
     Use it on text read from files (such as prompt templates) before hashing, so the
     same file gets the same ID whether it was saved on Windows or Linux.
@@ -32,14 +33,14 @@ def normalize_text(text: str) -> str:
         text: Any string.
 
     Returns:
-        The same string with every line ending as ``\\n``.
+        NFC text with every line ending as ``\\n``; preserve spaces and case.
 
     Example:
         >>> normalize_text("line one\\r\\nline two")
         'line one\\nline two'
     """
     # "\r\n" must be replaced first: doing "\r" first would turn "\r\n" into "\n\n".
-    return text.replace("\r\n", "\n").replace("\r", "\n")
+    return unicodedata.normalize("NFC", text.replace("\r\n", "\n").replace("\r", "\n"))
 
 
 def content_id(obj: object) -> str:

@@ -33,3 +33,6 @@ Do **not** write one for easily reversible choices (CLI colours, internal helper
 | [0007](0007-build-order.md) | Build the statistics core and storage as parallel tracks | Accepted |
 | [0008](0008-zensical-docs.md) | Zensical for the documentation site | Accepted |
 | [0009](0009-lean-runtime-no-scipy.md) | Lean runtime: NumPy and the standard library, no SciPy | Accepted |
+| [0010](0010-data-backbone-contracts.md) | Data backbone identities, split sets and synchronous stores | Proposed |
+| [0011](0011-offline-report-contract.md) | Explicit offline report assumptions and adjudication | Proposed |
+| [0012](0012-rich-cli-tables.md) | Rich at the CLI boundary | Proposed |

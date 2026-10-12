@@ -3,6 +3,22 @@
 Honest numbers need honest limits. These are the assumptions EvalHawk's results depend on,
 and the cases it doesn't handle. Each will be revisited as the project matures.
 
+## Data Backbone Review Notes
+
+The D2-D7 feature branch uses optional dependence groups and overlapping topic tags.
+Without dependence metadata, near-duplicate inputs may cross split piles and produce
+overconfident intervals. Hashing does not detect semantic duplicates. Preprocess overlapping
+dependence relationships before locking assignments; group sizes need not be equal.
+
+Tag counts are approximate, particularly with few/uneven groups. Diagnostic thresholds
+are heuristics; they do not guarantee enough independent data or human labels. Tag-specific
+judge accuracy may differ from overall calibration, and multiple tag comparisons need care.
+
+Changing a salt or regrouping data does not erase prior exposure to examples. Use genuinely
+unseen data for a fresh final evaluation. NFC/LF normalization is a text-evaluation policy;
+byte-exact evaluations need a future raw-data option. D2-D7 do not yet provide an import/report
+CLI, calibration-status computation, human-label adjudication or Store-to-stats services.
+
 ## Statistical assumptions
 
 | Assumption | What breaks if it's false | What EvalHawk does |

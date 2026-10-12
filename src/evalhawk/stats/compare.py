@@ -195,7 +195,7 @@ def paired_bootstrap(
     # If no clusters, use standard index resampling
     if clusters is None:
         # Bootstrap resampling with chunking
-        chunk_size = 100
+        chunk_size = max(1, min(100, (32 * 1024 * 1024) // (16 * n)))
         bootstrap_diffs: list[float] = []
 
         for chunk_start in range(0, n_boot, chunk_size):
@@ -208,6 +208,7 @@ def paired_bootstrap(
             # Compute bootstrap differences: (chunk_n,)
             diff_chunk = d[idx].mean(axis=1)
             bootstrap_diffs.extend(diff_chunk.tolist())
+            del idx
 
         bootstrap_diffs_arr = np.array(bootstrap_diffs)
         method = "paired_bootstrap"

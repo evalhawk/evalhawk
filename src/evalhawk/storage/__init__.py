@@ -1,0 +1,1 @@
+"""Persistent evaluation-state adapters."""

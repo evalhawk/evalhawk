@@ -173,3 +173,39 @@ class Comparison:
             f"{point_str} [{low_str}, {high_str}] {self.decision} "
             f"(p={self.p_value:.3f}, b={self.b}, c={self.c})"
         )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Report:
+    """Representative-case estimates with explicit missingness denominators."""
+
+    naive: Estimate
+    corrected: Estimate
+    ppi: Estimate
+    sensitivity: Estimate
+    specificity: Estimate
+    kappa: Estimate
+    dev_cases: int
+    calibration_pairs: int
+    unresolved_labels: int
+    dev_unknown: int
+    test_cases: int
+    dev_missing: int
+    test_missing: int
+    warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProxyComparison:
+    """Judge-proxy difference; not a corrected human-quality comparison."""
+
+    difference: Estimate
+    decision: Decision
+    lost: int
+    gained: int
+    p_value: float | None
+    unmatched: int
+    unknown_pairs: int
+    required_total: int | None
+    additional_pairs: int | None
+    warnings: tuple[str, ...]

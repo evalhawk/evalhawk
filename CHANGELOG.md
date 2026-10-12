@@ -10,6 +10,16 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Offline services and CLI: synthetic `demo init`, recorded JSONL/CSV `import`,
+  representative-case `report`, paired judge-proxy `compare`, split/read `audit`,
+  latest-label majority adjudication, run manifests and explicit run selection.
+  Rich is a direct CLI dependency; ADRs 0011 and 0012 remain Proposed.
+- Schema 2 scalar outcome reads and forward migration from populated schema 1.
+- Adaptive bootstrap batches and singleton-cluster reduction, with million-item
+  peak-allocation regression tests. Memory remains O(n), not constant or six MB total.
+- Data backbone (D2-D7): validated models, normalized text identities, group-aware split
+  sets, sync Store protocols, transactional SQLite, streaming JSONL/CSV sources, tags,
+  split diagnostics and offline fakes. ADR-0010 is Proposed pending maintainer review.
 - Coverage simulations (card S7): fixed-seed slow tests for naive, Rogan–Gladen, PPI,
   and clustered intervals, plus a standalone theta-grid coverage plotting script.
 - Cluster-robust standard errors, clustered bootstrap options and `required_n_paired()` for sample-size planning (card S6). 
@@ -34,4 +44,5 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Changed
 
+- `normalize_text()` also applies Unicode NFC; `content_id()` itself is unchanged.
 - SciPy is no longer a runtime dependency (ADR-0009).
