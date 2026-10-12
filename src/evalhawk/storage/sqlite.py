@@ -184,4 +184,192 @@ class SQLiteStore:
                     "INSERT OR IGNORE INTO splits VALUES (?, ?, ?, ?, ?)",
                     (config.id, example.id, key, example.group_id, config.assign(example).value),
                 )
+        
+    def get_split(self, split_set_id: str, example_id: str) -> Split | None:
+        """Read an assignment without exposing evaluation outcomes."""
+        row = self._connection.execute(
+            "SELECT split FROM splits WHERE split_set_id=? AND example_id=?",
+            (split_set_id, example_id),
+        ).fetchone()
+        return Split(row[0]) if row else None
 
+    def get_verdict(self, trace_id: str, criterion_id: str, judge_id: str) -> Verdict | None:
+        """Read the cached judge answer without selecting a split."""
+        row = self._connection.execute(
+            "SELECT record FROM verdicts WHERE trace_id=? AND criterion_id=? AND judge_id=?",
+            (trace_id, criterion_id, judge_id),
+        ).fetchone()
+        return Verdict.model_validate_json(row[0]) if row else None
+
+    def put_verdict(self, verdict: Verdict) -> None:
+        """Keep cached judgments immutable; a changed answer requires a new judge ID."""
+        with self._transaction():
+            previous = self.get_verdict(verdict.trace_id, verdict.criterion_id, verdict.judge_id)
+            if previous and (previous.outcome, previous.probability) != (
+                verdict.outcome,
+                verdict.probability,
+            ):
+                raise DataError("cached verdict differs; use a new judge_id for changed judgments")
+            self._connection.execute(
+                "INSERT OR IGNORE INTO verdicts VALUES (?, ?, ?, ?)",
+                (verdict.trace_id, verdict.criterion_id, verdict.judge_id, _payload(verdict)),
+            )
+
+    def add_label(self, label: Label) -> None:
+        """Preserve annotation history rather than silently choosing a human answer."""
+        with self._transaction():
+            self._connection.execute(
+                "INSERT OR IGNORE INTO labels VALUES (?, ?, ?, ?)",
+                (label.id, label.trace_id, label.criterion_id, _payload(label)),
+            )
+
+    def paired_records(
+        self,
+        *,
+        run_id: str,
+        criterion_id: str,
+        judge_id: str,
+        split_set_id: str,
+        split: Split,
+        purpose: str,
+        tag: str | None = None,
+    ) -> Iterator[PairedRecord]:
+        """Stream judge/human pairs; multiple annotations remain explicit rows."""
+        if not purpose.strip():
+            raise DataError("purpose must describe why outcomes are being read")
+        if split == Split.TEST:
+            with self._transaction():
+                self._connection.execute(
+                    "INSERT INTO test_access_log(split_set_id,purpose,at) VALUES (?,?,?)",
+                    (split_set_id, purpose, datetime.now(UTC).isoformat()),
+                )
+        cursor = self._connection.execute(
+            "SELECT t.example_id,s.group_id,t.id,v.record,l.record FROM traces t "
+            "JOIN splits s ON s.example_id=t.example_id "
+            "JOIN verdicts v ON v.trace_id=t.id AND v.criterion_id=? AND v.judge_id=? "
+            "LEFT JOIN labels l ON l.trace_id=t.id AND l.criterion_id=v.criterion_id "
+            "WHERE t.run_id=? AND s.split_set_id=? AND s.split=? "
+            "AND (? IS NULL OR EXISTS (SELECT 1 FROM example_tags et "
+            "WHERE et.example_id=t.example_id AND et.tag=?)) "
+            "ORDER BY t.example_id,t.repeat_index,l.id",
+            (criterion_id, judge_id, run_id, split_set_id, split.value, tag, tag),
+        )
+        try:
+            for example_id, group_id, trace_id, verdict_json, label_json in cursor:
+                verdict = Verdict.model_validate_json(verdict_json)
+                label = Label.model_validate_json(label_json) if label_json else None
+                yield PairedRecord(
+                    example_id,
+                    group_id,
+                    trace_id,
+                    verdict.outcome,
+                    label.outcome if label else None,
+                    label.annotator if label else None,
+                    label.inclusion_prob if label else None,
+                )
+        finally:
+            cursor.close()
+
+    def split_counts(self, split_set_id: str, *, tag: str | None = None) -> dict[Split, int]:
+        """Return actual per-tag pile sizes without reading outcomes."""
+        counts = dict.fromkeys(Split, 0)
+        for pile, count in self._connection.execute(
+            "SELECT split,count(*) FROM splits s WHERE split_set_id=? "
+            "AND (? IS NULL OR EXISTS(SELECT 1 FROM example_tags et "
+            "WHERE et.example_id=s.example_id AND et.tag=?)) GROUP BY split",
+            (split_set_id, tag, tag),
+        ):
+            counts[Split(pile)] = count
+        return counts
+
+    def close(self) -> None:
+        """Release the connection before removing or moving a database file."""
+        self._connection.close()
+
+    def find_runs(self, target_version: str) -> list[Run]:
+        """Find executions by version; callers must refuse ambiguous selections."""
+        return [
+            run
+            for (payload,) in self._connection.execute("SELECT record FROM runs ORDER BY id")
+            if (run := Run.model_validate_json(payload)).target_version == target_version
+        ]
+
+    def test_reads(self, split_set_id: str) -> list[tuple[str, str]]:
+        """Return purpose and UTC timestamp for every audited test read."""
+        return list(
+            self._connection.execute(
+                "SELECT purpose,at FROM test_access_log WHERE split_set_id=? ORDER BY id",
+                (split_set_id,),
+            )
+        )
+
+    def get_run(self, run_id: str) -> Run | None:
+        """Read one execution by its content ID."""
+        row = self._connection.execute("SELECT record FROM runs WHERE id=?", (run_id,)).fetchone()
+        return Run.model_validate_json(row[0]) if row else None
+
+    def outcome_rows(
+        self,
+        *,
+        run_id: str,
+        criterion_id: str,
+        judge_id: str,
+        split_set_id: str,
+        split: Split,
+        purpose: str,
+        tag: str | None = None,
+        include_labels: bool = True,
+    ) -> Iterator[OutcomeRow]:
+        """Stream indexed identifiers and generated scalar outcomes, never full JSON."""
+        if not purpose.strip():
+            raise DataError("purpose must describe why outcomes are being read")
+        if split == Split.TEST:
+            with self._transaction():
+                self._connection.execute(
+                    "INSERT INTO test_access_log(split_set_id,purpose,at) VALUES (?,?,?)",
+                    (split_set_id, purpose, datetime.now(UTC).isoformat()),
+                )
+        cursor = self._connection.execute(
+            "SELECT t.example_id,s.group_id,t.id,t.repeat_index,v.outcome,"
+            "l.outcome,l.annotator,l.inclusion_prob,l.created_at FROM traces t "
+            "JOIN splits s ON s.example_id=t.example_id "
+            "LEFT JOIN verdicts v ON v.trace_id=t.id AND v.criterion_id=? AND v.judge_id=? "
+            "LEFT JOIN labels l ON l.trace_id=t.id AND l.criterion_id=? AND ? "
+            "WHERE t.run_id=? AND s.split_set_id=? AND s.split=? "
+            "AND (? IS NULL OR EXISTS (SELECT 1 FROM example_tags et "
+            "WHERE et.example_id=t.example_id AND et.tag=?)) "
+            "ORDER BY t.example_id,t.repeat_index,l.id",
+            (
+                criterion_id,
+                judge_id,
+                criterion_id,
+                include_labels,
+                run_id,
+                split_set_id,
+                split.value,
+                tag,
+                tag,
+            ),
+        )
+        try:
+            for example, group, trace, repeat, judge, human, annotator, probability, at in cursor:
+                yield OutcomeRow(
+                    example,
+                    group,
+                    trace,
+                    repeat,
+                    Outcome(judge) if judge else Outcome.UNKNOWN,
+                    Outcome(human) if human else None,
+                    annotator,
+                    probability,
+                    datetime.fromisoformat(at) if at else None,
+                    judge is None,
+                )
+        finally:
+            cursor.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()
