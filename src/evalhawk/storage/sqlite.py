@@ -184,7 +184,7 @@ class SQLiteStore:
                     "INSERT OR IGNORE INTO splits VALUES (?, ?, ?, ?, ?)",
                     (config.id, example.id, key, example.group_id, config.assign(example).value),
                 )
-        
+
     def get_split(self, split_set_id: str, example_id: str) -> Split | None:
         """Read an assignment without exposing evaluation outcomes."""
         row = self._connection.execute(
