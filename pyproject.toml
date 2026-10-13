@@ -42,6 +42,7 @@ dependencies = [
     "pydantic>=2.8",
     "numpy>=2.0",
     "typer>=0.12",
+    "rich>=13.8.0",
 ]
 
 [project.urls]
@@ -168,6 +169,7 @@ forbidden_modules = [
     "evalhawk.clustering",
     "evalhawk.testing",
     "typer",
+    "rich",
     "sqlite3",
 ]
 
@@ -204,3 +206,26 @@ forbidden_modules = [
 #     "evalhawk.services",
 #     "evalhawk.runner",
 # ]
+
+[[tool.importlinter.contracts]]
+name = "implemented data adapters depend inward, never on application interfaces"
+type = "forbidden"
+source_modules = ["evalhawk.sources", "evalhawk.storage"]
+forbidden_modules = [
+    "evalhawk.cli", "evalhawk.ui", "evalhawk.wiring", "evalhawk.services", "evalhawk.runner",
+]
+
+[[tool.importlinter.contracts]]
+name = "implemented services depend on ports, not adapters or presentation"
+type = "forbidden"
+source_modules = ["evalhawk.services"]
+forbidden_modules = [
+    "evalhawk.cli", "evalhawk.ui", "evalhawk.wiring", "evalhawk.sources",
+    "evalhawk.storage", "evalhawk.testing", "typer", "rich",
+]
+
+[[tool.importlinter.contracts]]
+name = "terminal presentation stays in the CLI"
+type = "forbidden"
+source_modules = ["evalhawk.sources", "evalhawk.storage", "evalhawk.testing"]
+forbidden_modules = ["rich"]

@@ -214,6 +214,23 @@ portfolio artefact.
 
 ## Track 2: data backbone (owner: Karthik)
 
+**D2-D7 implementation status (2026-10-11):** built on `feat/track2-data-backbone`
+in the pair session; maintainer review and acceptance are pending. The implementation
+clarifications in [ADR-0010](../decisions/0010-data-backbone-contracts.md) take precedence
+over the original card sketches below for this PR:
+
+- D2 includes TargetOutput, optional tags, normalized identities and explicit repeats.
+- D3 hashes structured keys and supports immutable named split sets with diagnostics.
+- D4 uses a synchronous Store; TraceSource yields `(Example, TargetOutput | None)`.
+- D5 uses the shipped indexed JSON-record schema, immutable split-set/group snapshots,
+  audited paired reads and the active implemented-adapter import contract.
+- D6 leaves run identity to import services, accepts pipe-separated CSV tags, and keeps
+  unknown columns as metadata. Streaming memory and insertion workloads are tested.
+- D7 uses a separate truth mapping rather than a test-only Trace field; known accuracy
+  means generating probabilities, not exact finite-sample counts. Both stores share tests.
+- X1-X3 are **not implemented**: UNKNOWN handling, label adjudication, calibration status,
+  report rendering, recorded verdict imports and Store-to-stats integration remain there.
+
 Files live in `src/evalhawk/core/`, `storage/`, `sources/` and `testing/`. `core/` must stay
 pure: no I/O, no vendor SDKs (import-linter enforces this).
 
@@ -345,6 +362,14 @@ of its setting; `InMemoryStore` passes the same round-trip tests as `SQLiteStore
 
 **Stage D is done when:** on a public dataset with human labels, `evalhawk report` prints a
 judge report card and a corrected pass rate with an error range.
+
+**Local implementation (pairing, pending review):** X1-X3 now connect recorded outcomes
+to rate reports, paired proxy comparison and audit through a usable offline CLI.
+The first demonstration is synthetic by explicit session agreement; the original
+public-human-labelled-dataset acceptance gate is **not yet met**. DeepEval mapping
+is deferred pending verified format examples. Proposed ADRs 0011/0012 document
+representative-case inference, adjudication, memory limits and Rich. Both tracks
+were touched: core/store ports, statistical bootstrap batching, sources and services.
 
 ## Suggested first week
 

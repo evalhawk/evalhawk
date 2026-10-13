@@ -86,6 +86,7 @@ def cluster_bootstrap_means(
     *,
     rng: np.random.Generator,
     n_boot: int,
+    memory_budget_bytes: int = 32 * 1024 * 1024,
 ) -> npt.NDArray[np.float64]:
     """Bootstrap means of ``values``, resampling whole clusters with replacement.
 
@@ -97,6 +98,9 @@ def cluster_bootstrap_means(
         clusters: Cluster label per item (any 1-D labels). Needs >= 2 distinct clusters.
         rng: NumPy random generator for resampling.
         n_boot: Number of bootstrap resamples.
+        memory_budget_bytes: Target for temporary draw/gather buffers, default 32 MiB.
+            Excludes inputs, cluster reduction and results. At least one resample
+            is processed, even when that resample exceeds the target.
 
     Returns:
         Array of ``n_boot`` resampled means.
@@ -104,6 +108,8 @@ def cluster_bootstrap_means(
     Raises:
         ValueError: If lengths differ or there is only one cluster.
     """
+    if type(memory_budget_bytes) is not int or memory_budget_bytes < 24:
+        raise ValueError("memory_budget_bytes must be an integer of at least 24")
     v_arr = np.asarray(values, dtype=np.float64)
     c_arr = np.asarray(clusters)
     check_same_length("values", v_arr, "clusters", c_arr)
@@ -117,14 +123,20 @@ def cluster_bootstrap_means(
         )
 
     sums = np.bincount(inverse, weights=v_arr, minlength=n_clusters)
-    sizes = np.bincount(inverse, minlength=n_clusters).astype(np.float64)
+    singleton = n_clusters == len(v_arr)
+    sizes = None if singleton else np.bincount(inverse, minlength=n_clusters).astype(np.float64)
 
     means = np.empty(n_boot, dtype=np.float64)
-    chunk = 100  # bounds memory at chunk * n_clusters draws
+    bytes_per_cluster = 16 if singleton else 24
+    chunk = max(1, min(100, memory_budget_bytes // (bytes_per_cluster * n_clusters)))
     for start in range(0, n_boot, chunk):
         stop = min(start + chunk, n_boot)
         draws = rng.integers(0, n_clusters, size=(stop - start, n_clusters))
-        means[start:stop] = sums[draws].sum(axis=1) / sizes[draws].sum(axis=1)
+        if sizes is None:
+            means[start:stop] = sums[draws].mean(axis=1)
+        else:
+            means[start:stop] = sums[draws].sum(axis=1) / sizes[draws].sum(axis=1)
+        del draws
     return means
 
 

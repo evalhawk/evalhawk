@@ -172,6 +172,45 @@ acme = "acme_evalhawk:AcmeJudge"
 
 ## 4. Data model and storage schema
 
+### Implemented D2-D7 Contracts (Review Pending)
+
+[ADR-0010](decisions/0010-data-backbone-contracts.md) records the proposed replacement
+for identity/split details below. This implementation is on the feature branch, not
+an approved release. The entity table remains the broader roadmap; the SQL and protocol
+examples below are historical sketches, not executable representations of the current store.
+
+- Models: `Example`, `Run`, `Trace`, `Criterion`, `Verdict`, `Label`, `Evaluation`,
+  `Calibration`, `TargetOutput`, `Outcome` and `Split`. Dataset registration is deferred;
+  `Evaluation.dataset_id` is configuration metadata, not a persisted dataset foreign key.
+- Text: NFC and LF for input/reference string values, output, contexts and identifiers.
+  Raw `content_id` remains unchanged. Preserve case, spaces and mapping keys. Frozen
+  records prevent attribute assignment, not mutation inside JSON lists/dictionaries;
+  persistence revalidates identity and copies records.
+- `group_id`: optional dependence unit; `tags`: overlapping editable report categories.
+  Never use topics as dependence groups without an evaluation-specific reason.
+- Split sets: salt, ratios and `by` form identity. A salt cannot be reused with different
+  configuration in one store. Assignment uses structured, namespaced keys. SQL stores
+  `(split_set_id, example_id, split_key, group_id, split)` and immutable set definitions.
+  Tags and descriptive example metadata may change; grouping snapshots remain frozen.
+- SQLite schema: validated JSON records plus indexed foreign keys; `examples`,
+  `example_tags`, `split_sets`, `splits`, `runs`, `traces`, `criteria`, `verdicts`,
+  `labels`, `test_access_log`. See the shipped `0001_init.sql` for the authoritative schema.
+  Trace slots are unique on `(example_id, run_id, repeat_index)`.
+- Store is **synchronous**, with async Judge/Target ports. Sources yield
+  `(Example, TargetOutput | None)`; import services create runs/traces. Methods include
+  `add_examples`, `add_run`, `add_traces`, `add_criterion`, `assign_splits`, `get_split`,
+  `get_verdict`, `put_verdict`, `add_label`, `paired_records`, `split_counts`, `close`.
+- `paired_records` requires run/criterion/judge IDs, split-set ID, split and read purpose;
+  optional tag filters select categories. It returns explicit human annotations without
+  adjudication. Test-split paired reads are logged. `split_counts` reads no outcomes.
+- `diagnose_splits` returns actual pile/tag counts and configurable heuristic warnings.
+  It needs a complete example snapshot, unlike streaming import; reporting integration
+  belongs to X1-X3. Exact tag stratification is not implemented.
+- A new salt preserves another assignment history. It does **not** undo exposure:
+  an honest fresh final evaluation requires unseen examples, not just reshuffled data.
+- FakeJudge has known error probabilities and an explicit RNG/truth mapping; FakeTarget
+  returns canned outputs; InMemoryStore passes the same storage tests as SQLiteStore.
+
 ### 4.1 Entities
 
 ```
@@ -307,7 +346,9 @@ Migrations are tracked with `PRAGMA user_version`. Each connection sets `busy_ti
 
 ## 5. Interfaces (the plug-in points)
 
-`core/protocols.py`:
+The following is the original design sketch. The implemented sync Store and
+`TargetOutput | None` source contract are described above and in ADR-0010.
+`core/protocols.py` is authoritative for callable signatures:
 
 ```python
 from collections.abc import AsyncIterator, Iterable
