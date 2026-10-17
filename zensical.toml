@@ -60,6 +60,7 @@ nav = [
     { "Engineering standards" = "development/standards.md" },
     { "Dev log" = [
       { "Overview" = "devlog/index.md" },
+      { "X2/X3 MT-Bench on real data" = "devlog/2026-10-17-X2-mtbench.md" },
       { "D2-D7 Data backbone" = "devlog/2026-10-11-D2-D7-data-backbone.md" },
       { "X1-X3 Offline demo" = "devlog/2026-10-11-X1-X3-offline-demo.md" },
       { "S7 · Coverage simulation" = "devlog/2026-10-09-S7-coverage-simulation.md" },

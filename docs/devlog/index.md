@@ -15,6 +15,7 @@ what each of us built and learned.
 
 | Date | Card | Entry | Author |
 |---|---|---|---|
+| 2026-10-17 | X2/X3 | [MT-Bench on real data](2026-10-17-X2-mtbench.md) | Venkata Sai Karthik |
 | 2026-10-11 | D2-D7 | [Data backbone](2026-10-11-D2-D7-data-backbone.md) | Krishna Nandimandalam and Venkata Sai Karthik |
 | 2026-10-09 | S7 | [Coverage simulation](2026-10-09-S7-coverage-simulation.md) | Krishna Nandimandalam |
 | 2026-10-09 | S6 | [Clustered errors and power](2026-10-09-S6-clustered-and-power.md) | Krishna Nandimandalam |

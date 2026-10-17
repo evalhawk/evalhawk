@@ -10,6 +10,8 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- MT-Bench human-judgments converter (`experiments/datasets/mtbench_human.py`): run the
+  offline report on real GPT-4 verdicts against human experts.
 - Offline services and CLI: synthetic `demo init`, recorded JSONL/CSV `import`,
   representative-case `report`, paired judge-proxy `compare`, split/read `audit`,
   latest-label majority adjudication, run manifests and explicit run selection.
@@ -22,7 +24,7 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
   split diagnostics and offline fakes. ADR-0010 is Proposed pending maintainer review.
 - Coverage simulations (card S7): fixed-seed slow tests for naive, Rogan–Gladen, PPI,
   and clustered intervals, plus a standalone theta-grid coverage plotting script.
-- Cluster-robust standard errors, clustered bootstrap options and `required_n_paired()` for sample-size planning (card S6). 
+- Cluster-robust standard errors, clustered bootstrap options and `required_n_paired()` for sample-size planning (card S6).
 - Prediction-powered inference for mean estimation (card S5): `ppi_mean()` with unbiased
   point estimate and confidence interval.
 - Version comparison (card S4): `mcnemar_exact()`, `paired_bootstrap()`, `decide()` and the `Comparison` result object.
