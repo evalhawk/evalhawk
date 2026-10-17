@@ -80,6 +80,9 @@ root, so both assistants follow the same rules.
 5. The AI **never pushes or merges** on its own. A human reviews first.
 6. Stay inside your task. If your AI needs to change files in the other track, say so in
    the PR and tag the other maintainer.
+7. **Pair work gets both names.** When we work together on one laptop, add a co-author line
+   to the commit message so GitHub credits both of us, e.g.
+   `Co-authored-by: Venkata Sai Karthik <venkatsai.karthik.goud@gmail.com>`.
 
 ## 7. Documentation duties
 

@@ -64,25 +64,28 @@ uv run evalhawk --version
 
 Always use `uv run` (never the system `python`). On Windows, if `uv` isn't found, add `%USERPROFILE%\.local\bin` to PATH, e.g. in PowerShell: `$env:Path = "$env:USERPROFILE\.local\bin;$env:Path"`.
 
-## Current status (2026-09-29): Phase 0 nearly done
+## Current status (2026-10-17): Stages A–D done (offline demo on synthetic data)
 
-**Done (verified locally, not yet committed):**
-- `uv sync --all-groups`; ruff, ruff format, pyright, import-linter, pytest all pass; `zensical build --strict` clean.
-- `git init -b main` (no commits yet).
-- `.pre-commit-config.yaml` (pre-commit-hooks v6.0.0 + local `uv run` hooks for ruff, pyright, lint-imports), installed.
-- `.github/workflows/ci.yml` and `docs.yml`, `.github/pull_request_template.md`. Action versions checked 2026-09-27: `actions/checkout@v7`, `astral-sh/setup-uv@v10.2.0` (**setup-uv no longer publishes floating major tags: pin the full version**), `configure-pages@v6`, `upload-pages-artifact@v5`, `deploy-pages@v5`.
-- `import-linter` (dev) with contract 1 active (core/stats purity). Contracts 2 and 3 are commented out in `pyproject.toml` until `services/`, `runner/` and adapters exist (import-linter requires source packages to exist).
-- ruff 0.16 formats Python code blocks inside Markdown too; docs examples follow code style.
-- Docs: `zensical.toml`, `docs/index.md`, `getting-started.md`, `requirements.md` (FR/NFR with IDs), `limitations.md`, `design/patterns.md` (LLD + 10 intuitions), `development/standards.md`, `decisions/` (template + index + ADR 0001–0008; **0007 build order is Proposed**, awaiting owner confirmation). `roadmap.md` and `architecture.md` renamed to evalhawk and updated with the agreed design additions and the new package tree.
-- Root: `CONTRIBUTING.md`, `CHANGELOG.md`, `SECURITY.md`; README updated (brand EvalHawk).
-- GitHub org `evalhawk` created; `pyproject.toml` URLs point to `evalhawk/evalhawk` and `evalhawk.github.io/evalhawk`.
+**On `main`:** foundation + CI (PRs #22–#25). D1 content IDs; J1 `Estimate`/errors; S1–S7 statistics
+engine incl. the coverage simulation; D2–D7 data backbone (models, splits, protocols, SQLite store,
+JSONL/CSV import, fakes); X1 services and an offline CLI: `evalhawk demo init`, `import`, `report`,
+`compare`, `audit` (see `docs/getting-started.md`). 335 tests (23 marked `slow`), ~92% coverage,
+4 import-linter contracts. ADRs 0001–0009 Accepted; **0010–0012 Proposed** (data-backbone contracts
+incl. NFC + LF normalization of user text before hashing; offline report contract; `rich` as a
+runtime dependency): both maintainers must accept or revise them.
 
-**Remaining Phase 0 steps:**
-1. ✅ `LICENSE` (MIT, "Venkata Sai Karthik and Krishna Nandimandalam"), `authors`, Zensical copyright.
-2. ✅ Maintainer agreement, work plan (cards J1, S1–S7, D1–D7, X1–X3), dev log, PR template. Both must approve the agreement, ADR-0007 (parallel tracks) and ADR-0009 (no SciPy at runtime) in the first PR review.
-3. ✅ Krishna's handle `kclectic0501` added; `.github/CODEOWNERS` requests both maintainers on every PR. Krishna must accept the org invite as **Owner**.
-4. First commit (end the message with the Co-Authored-By line from the session), create the **public** repo `evalhawk/evalhawk`, push, confirm CI green. **Ask Karthik how:** install `gh` via winget + `gh auth login`, or create it on github.com. Then: Settings → Pages → Source "GitHub Actions"; enable private vulnerability reporting; branch protection on `main` (PR, green CI, 1 approval); create GitHub issues from the work-plan cards.
-5. Publish `0.0.1` to PyPI to secure the name (a PyPI account with 2FA; both maintainers become Owners).
-6. If ADR-0009 is accepted: move `scipy` from `dependencies` to the `dev` group.
+**Pair work:** the maintainers sometimes pair on one laptop, so git may show only one author. For pair
+commits add `Co-authored-by: Venkata Sai Karthik <venkatsai.karthik.goud@gmail.com>` (or Krishna's
+equivalent) so both get credit.
 
-**Then J1 (pair), followed by the parallel tracks in `docs/development/workplan.md`.** Present a to-do list first.
+**Open:** #17 X2 (DeepEval mapping + MT-Bench converter remain), #18 X3 (demo runs on synthetic data;
+public human-labelled dataset + README GIF remain), #2 PyPI name (deferred by Karthik), #3 branch
+protection. Maintainer agreement: Krishna signed (10 h/week); Karthik's sign-off and hours pending.
+
+**Next:** finish X2/X3 on MT-Bench human judgments, then Phase 4 (live judges via Ollama, runner with
+the judgment-key cache, targets). Present a to-do list and a fair split between both maintainers first.
+
+**Design note for the Phase 4 runner (agreed 2026-10-01):** keep verdicts keyed by
+`(trace_id, criterion_id, judge_id)`, but look up reuse by a *judgment key* = content_id of everything
+the judge sees (input, reference, output, contexts, criterion, judge), excluding run/version and repeat,
+so identical answers across versions and repeats are never paid for twice.
