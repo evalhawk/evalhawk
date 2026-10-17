@@ -119,7 +119,27 @@ exact run ID to report/compare/audit. Criterion, judge and split configuration m
 match when resuming or comparing. Imports may leave completed writes if a later
 row fails; processed rows are not a count of newly inserted unique records.
 
-Remaining work includes a public human-labelled dataset, DeepEval-format mapping,
+## Real data: MT-Bench human judgments
+
+The same commands work on real data: GPT-4's verdicts against human experts from the public
+[MT-Bench human judgments](https://huggingface.co/datasets/lmsys/mt_bench_human_judgments)
+dataset (CC-BY-4.0). The converter downloads it once and caches it under `.evalhawk/`.
+
+```bash
+uv run python experiments/datasets/mtbench_human.py --out data/mtbench_human.jsonl
+uv run evalhawk import data/mtbench_human.jsonl --target-version mtbench-2023     --db data/mtbench.db --criterion first_model_better     --question "Is the first model's answer better than the second model's answer?"     --judge-id gpt-4-pair-2023
+uv run evalhawk report --run mtbench-2023 --db data/mtbench.db --seed 0
+uv run evalhawk report --run mtbench-2023 --db data/mtbench.db --seed 0 --tag writing
+```
+
+Each pair of models is put in alphabetical order, so the criterion asks whether the first
+model's answer is better; ties and GPT-4's position-inconsistent verdicts become UNKNOWN. The
+**judge report card** is the main result: with seed 0, GPT-4 shows sensitivity 0.907
+[0.844, 0.946], specificity 0.882 [0.812, 0.929] and kappa 0.790 against expert labels. The
+overall pass rate (about 50%) is not meaningful by itself, because "first" is alphabetical.
+Per-pair tags are usually refused, since one outcome dominates within a pair.
+
+Remaining work includes DeepEval-format mapping,
 live targets/judges, weighted inference and full-population clustered calibration/PPI.
 See Proposed ADRs [0011](decisions/0011-offline-report-contract.md) and
 [0012](decisions/0012-rich-cli-tables.md).

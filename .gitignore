@@ -32,3 +32,6 @@ site/
 *.swp
 .DS_Store
 Thumbs.db
+
+# --- generated datasets and evaluation databases (e.g. the MT-Bench converter output)
+data/
