@@ -342,7 +342,75 @@ def ui_command(
         )
 
 
+def cascade_command(
+    run: Annotated[str, typer.Option("--run")],
+    criterion: Annotated[str, typer.Option("--criterion")],
+    cheap: Annotated[str, typer.Option("--cheap", help="Judge name of the cheap judge")],
+    strong: Annotated[str, typer.Option("--strong", help="Judge name of the strong judge")],
+    target_accuracy: Annotated[float, typer.Option(help="Accuracy the cascade must reach")] = 0.9,
+    config: ConfigOption = Path("evalhawk.toml"),
+    db: DbOption = None,
+) -> None:
+    """Choose a cheap→strong cascade threshold on dev labels (cost vs accuracy)."""
+    from evalhawk.services.cascade import analyse_cascade
+
+    with user_errors(), open_store(database(db, config)) as store:
+        execution = select_run(store, run)
+        result = analyse_cascade(
+            store,
+            execution,
+            criterion=criterion,
+            cheap=cheap,
+            strong=strong,
+            target_accuracy=target_accuracy,
+        )
+        curve = result.curve
+        table = Table(title=f"Cascade {cheap} -> {strong} on {criterion!r} ({result.n} dev labels)")
+        for heading in ("Threshold", "Cheap decides", "Escalations", "Accuracy", "95% interval"):
+            table.add_column(heading)
+        step = max(1, len(curve.points) // 12)
+        shown = list(curve.points[::step])
+        if curve.chosen is not None and curve.chosen not in shown:
+            shown.append(curve.chosen)
+        for point in sorted(shown, key=lambda p: p.threshold):
+            mark = "  <- chosen" if point is curve.chosen else ""
+            table.add_row(
+                f"{point.threshold:.3f}{mark}",
+                f"{point.coverage:.0%}",
+                str(point.escalations),
+                f"{point.accuracy.point:.1%}",
+                f"[{point.accuracy.low:.1%}, {point.accuracy.high:.1%}]",
+            )
+        console.print(table)
+        console.print(
+            f"Cheap alone: {curve.cheap_accuracy.point:.1%}; strong alone: "
+            f"{curve.strong_accuracy.point:.1%}."
+        )
+        errors = result.errors
+        conditional = errors.strong_wrong_given_cheap_wrong
+        if conditional is not None:
+            console.print(
+                f"Strong wrong overall {errors.strong_wrong.point:.1%}; strong wrong when cheap "
+                f"is wrong {conditional.point:.1%} [{conditional.low:.1%}, {conditional.high:.1%}]"
+                + (f"; lift {errors.lift:.1f}x" if errors.lift is not None else "")
+                + ". Near 1x: independent errors, escalation helps; far above: they fail together."
+            )
+        if result.skipped_no_probability:
+            console.print(f"{result.skipped_no_probability} answers skipped: no cheap probability.")
+        if curve.chosen is None:
+            console.print(
+                f"No threshold reaches {target_accuracy:.0%}; use the strong judge alone."
+            )
+        else:
+            console.print(
+                f'Add to evalhawk.toml:  [judges.cascade]  type = "cascade"  cheap = "{cheap}"'
+                f'  strong = "{strong}"  threshold = {curve.chosen.threshold:.3f}'
+            )
+            console.print("Chosen on dev: confirm it on test before trusting the cost saving.")
+
+
 judges_app.command("status")(status_command)
+judges_app.command("cascade")(cascade_command)
 judges_app.command("compare")(compare_judges_command)
 
 __all__ = ["eval_command", "export_command", "init_command", "judges_app", "ui_command"]
