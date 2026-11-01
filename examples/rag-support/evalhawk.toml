@@ -1,0 +1,44 @@
+# A RAG example that runs fully offline: `evalhawk eval -t v1`, then `evalhawk retrieval --run v1`.
+version = 1
+
+[project]
+name = "rag-support"
+store = ".evalhawk/eval.db"
+
+[target]
+type = "callable"
+callable = "app:answer"                # returns {"output", "contexts", "retrieved_ids"}
+
+[splits]
+salt = "v1"
+
+[[criteria]]
+name = "not_empty"
+check = { type = "not_empty" }
+
+[[criteria]]
+name = "grounded_numbers"
+question = "Does every number in the answer appear in the retrieved context?"
+
+[[criteria]]
+name = "faithfulness"
+template = "faithfulness"              # built-in, needs an LLM judge and kind = "rag"
+
+# A custom judge: your own Python function (see judges.py). Bump `version` when you edit it.
+[judges.grounded]
+type = "function"
+callable = "judges:grounded"
+version = "1"
+
+# An LLM judge for the built-in faithfulness template (Ollama: `ollama pull qwen3:8b`).
+[judges.local]
+type = "openai_compatible"
+base_url = "http://localhost:11434/v1"
+model = "qwen3:8b"
+mode = "reason_then_verdict"
+
+[evaluations.support]
+dataset = "data/questions.jsonl"
+kind = "rag"
+criteria = { not_empty = "code", grounded_numbers = "grounded" }
+# With a judge running, add: faithfulness = "local"

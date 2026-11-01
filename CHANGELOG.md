@@ -10,6 +10,9 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Launch polish (Phase 10): README with real output, `examples/rag-support` (custom
+  function judge, RAG target, retrieval metrics; runs offline and is tested), and a
+  tag-triggered PyPI release workflow using trusted publishing (not yet run).
 - Failure discovery (Phase 9): `evalhawk discover` clusters judge reasoning and human notes
   on failures (TF-IDF + k-means in NumPy, no new dependencies) and can ask an LLM judge to
   propose a criterion per cluster; `Store.labels_for()`.

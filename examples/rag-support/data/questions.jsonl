@@ -1,0 +1,10 @@
+{"input": "Can I get a refund?", "reference": "Yes, within 30 days.", "relevant_ids": ["refunds"]}
+{"input": "How do I get my money back after a return?", "reference": "Refund to the original card within 30 days.", "relevant_ids": ["refunds"]}
+{"input": "Do you ship to Canada?", "reference": "Yes.", "relevant_ids": ["shipping"]}
+{"input": "How long does delivery take?", "reference": "5-7 business days.", "relevant_ids": ["shipping"]}
+{"input": "I can't log in, I forgot my password", "reference": "Use the Forgot password link.", "relevant_ids": ["passwords"]}
+{"input": "When are you open?", "reference": "9am-5pm, Monday to Friday.", "relevant_ids": ["hours"]}
+{"input": "Can I change my delivery address?", "reference": "Yes, until the order ships.", "relevant_ids": ["address", "shipping"]}
+{"input": "Do you have a loyalty programme?", "reference": "No.", "relevant_ids": []}
+{"input": "Is there a fee to return a damaged item?", "reference": "No, refunds are free within 30 days.", "relevant_ids": ["refunds"]}
+{"input": "What time does support close on Friday?", "reference": "5pm.", "relevant_ids": ["hours"]}
