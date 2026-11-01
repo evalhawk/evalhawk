@@ -49,11 +49,12 @@ class SQLiteStore:
             self._connection.execute(f"PRAGMA busy_timeout={int(busy_timeout)}")
             with self._transaction():
                 version = self._connection.execute("PRAGMA user_version").fetchone()[0]
-                if version > 2:
+                if version > 3:
                     raise StoreError("database schema is newer than this package; upgrade evalhawk")
                 for migration_version, migration in (
                     (1, "0001_init.sql"),
                     (2, "0002_outcome_columns.sql"),
+                    (3, "0003_judgments.sql"),
                 ):
                     if version >= migration_version:
                         continue
@@ -214,6 +215,50 @@ class SQLiteStore:
                 "INSERT OR IGNORE INTO verdicts VALUES (?, ?, ?, ?)",
                 (verdict.trace_id, verdict.criterion_id, verdict.judge_id, _payload(verdict)),
             )
+
+    def get_judgment(self, key: str) -> Verdict | None:
+        """Read a cached judgment by judgment key (everything the judge saw)."""
+        row = self._connection.execute(
+            "SELECT record FROM judgments WHERE key=?", (key,)
+        ).fetchone()
+        return Verdict.model_validate_json(row[0]) if row else None
+
+    def put_judgment(self, key: str, verdict: Verdict) -> None:
+        """Cache a judgment once; the first stored answer for a key is kept."""
+        with self._transaction():
+            self._connection.execute(
+                "INSERT OR IGNORE INTO judgments VALUES (?, ?, ?, ?)",
+                (key, verdict.judge_id, verdict.criterion_id, _payload(verdict)),
+            )
+
+    def get_example(self, example_id: str) -> Example | None:
+        """Read one example by ID."""
+        row = self._connection.execute(
+            "SELECT record FROM examples WHERE id=?", (example_id,)
+        ).fetchone()
+        return Example.model_validate_json(row[0]) if row else None
+
+    def get_trace(self, trace_id: str) -> Trace | None:
+        """Read one trace by ID."""
+        row = self._connection.execute(
+            "SELECT record FROM traces WHERE id=?", (trace_id,)
+        ).fetchone()
+        return Trace.model_validate_json(row[0]) if row else None
+
+    def get_trace_slot(self, run_id: str, example_id: str, repeat_index: int) -> Trace | None:
+        """Read the trace already stored for a run, example and repeat (crash resume)."""
+        row = self._connection.execute(
+            "SELECT record FROM traces WHERE run_id=? AND example_id=? AND repeat_index=?",
+            (run_id, example_id, repeat_index),
+        ).fetchone()
+        return Trace.model_validate_json(row[0]) if row else None
+
+    def get_criterion(self, criterion_id: str) -> Criterion | None:
+        """Read one criterion by ID."""
+        row = self._connection.execute(
+            "SELECT record FROM criteria WHERE id=?", (criterion_id,)
+        ).fetchone()
+        return Criterion.model_validate_json(row[0]) if row else None
 
     def add_label(self, label: Label) -> None:
         """Preserve annotation history rather than silently choosing a human answer."""

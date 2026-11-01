@@ -56,7 +56,7 @@ class FakeJudge:
         self.rng = rng
         self.judge_id = content_id(["fake-judge-v1", self.sensitivity, self.specificity])
 
-    async def judge(self, trace: Trace, criterion: Criterion) -> Verdict:
+    async def judge(self, example: Example, trace: Trace, criterion: Criterion) -> Verdict:
         """Grade against the separately supplied truth; preserve UNKNOWN ground truth."""
         try:
             truth = self.truth[trace.id]
@@ -84,6 +84,7 @@ class InMemoryStore:
         self.traces: dict[str, Trace] = {}
         self.criteria: dict[str, Criterion] = {}
         self.verdicts: dict[tuple[str, str, str], Verdict] = {}
+        self.judgments: dict[str, Verdict] = {}
         self.labels: dict[str, Label] = {}
         self.split_sets: dict[str, SplitSet] = {}
         self.splits: dict[tuple[str, str], tuple[str, Split, str | None]] = {}
@@ -162,6 +163,35 @@ class InMemoryStore:
         ):
             raise DataError("cached verdict differs; use a new judge_id")
         self.verdicts.setdefault(key, Verdict.model_validate_json(verdict.model_dump_json()))
+
+    def get_judgment(self, key: str) -> Verdict | None:
+        verdict = self.judgments.get(key)
+        return verdict.model_copy(deep=True) if verdict else None
+
+    def put_judgment(self, key: str, verdict: Verdict) -> None:
+        self.judgments.setdefault(key, Verdict.model_validate_json(verdict.model_dump_json()))
+
+    def get_example(self, example_id: str) -> Example | None:
+        example = self.examples.get(example_id)
+        return example.model_copy(deep=True) if example else None
+
+    def get_trace(self, trace_id: str) -> Trace | None:
+        trace = self.traces.get(trace_id)
+        return trace.model_copy(deep=True) if trace else None
+
+    def get_trace_slot(self, run_id: str, example_id: str, repeat_index: int) -> Trace | None:
+        for trace in self.traces.values():
+            if (trace.run_id, trace.example_id, trace.repeat_index) == (
+                run_id,
+                example_id,
+                repeat_index,
+            ):
+                return trace.model_copy(deep=True)
+        return None
+
+    def get_criterion(self, criterion_id: str) -> Criterion | None:
+        criterion = self.criteria.get(criterion_id)
+        return criterion.model_copy(deep=True) if criterion else None
 
     def add_label(self, label: Label) -> None:
         if label.trace_id not in self.traces or label.criterion_id not in self.criteria:

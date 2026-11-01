@@ -28,7 +28,8 @@ def test_fake_judge_known_rates() -> None:
     judge = FakeJudge(0.9, 0.7, truth=truth, rng=np.random.default_rng(42))
 
     async def measure() -> list[Outcome]:
-        return [(await judge.judge(trace, criterion)).outcome for trace in traces]
+        example = Example(input="q")
+        return [(await judge.judge(example, trace, criterion)).outcome for trace in traces]
 
     outcomes = asyncio.run(measure())
     assert abs(sum(item == Outcome.PASS for item in outcomes[:5000]) / 5000 - 0.9) < 0.01
