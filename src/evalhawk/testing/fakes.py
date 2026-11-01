@@ -263,6 +263,14 @@ class InMemoryStore:
             if run.target_version == target_version
         ]
 
+    def iter_traces(self, run_id: str) -> Iterator[Trace]:
+        ordered = sorted(
+            (t for t in self.traces.values() if t.run_id == run_id),
+            key=lambda t: (t.example_id, t.repeat_index),
+        )
+        for trace in ordered:
+            yield trace.model_copy(deep=True)
+
     def list_runs(self) -> list[Run]:
         return sorted(
             (run.model_copy(deep=True) for run in self.runs.values()),

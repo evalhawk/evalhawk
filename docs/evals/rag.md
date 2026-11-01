@@ -1,6 +1,6 @@
 # RAG systems
 
-!!! success "Answer checks available now (Phase 4): faithfulness, context_relevance, context_recall. Retrieval metrics (hit@k, MRR, nDCG) and published accuracy: Phase 8"
+!!! success "Available now: judged checks (faithfulness, context_relevance, context_recall) and retrieval metrics (`evalhawk retrieval`). Published accuracy on RAGTruth: still planned (needs a live judge run)"
 
 ## What it covers
 
@@ -39,7 +39,7 @@ question ──► RETRIEVER ──► documents ──► GENERATOR ──► a
 |---|---|---|---|---|
 | `context_relevance` | Are the retrieved documents relevant to the question? | The judge checks each document; PASS if the relevant share meets your minimum | `input`, `contexts` | RAGAS |
 | `context_recall` | Do the documents contain everything needed for the reference answer? | The judge splits the reference into facts and checks each is in the documents | `contexts`, `reference` | RAGAS |
-| `hit@k`, `recall@k`, `MRR`, `nDCG@k` | Did the right documents appear, and how high? | Pure math, no AI | `retrieved_ids`, `relevant_ids` | Standard information retrieval; nDCG: Järvelin & Kekäläinen (2002) |
+| `hit@k`, `recall@k`, `precision@k`, `MRR`, `nDCG@k` | Did the right documents appear, and how high? | Pure math, no AI; `evalhawk retrieval --run v1 --k 5` | `retrieved_ids` (target), `relevant_ids` (dataset) | Standard information retrieval; nDCG: Järvelin & Kekäläinen (2002) |
 
 **Why our faithfulness is stricter than DeepEval's.** DeepEval counts a claim as faithful if
 it doesn't **contradict** the documents, so a claim the documents never mention still counts
@@ -81,6 +81,7 @@ url           = "https://docs-bot.internal/ask"
 body          = { q = "{{input}}" }
 answer_path   = "$.answer"
 contexts_path = "$.sources[*].text"
+retrieved_ids_path = "$.sources[*].id"   # for retrieval metrics
 
 [[criteria]]
 name       = "faithfulness"

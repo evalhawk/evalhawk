@@ -96,6 +96,8 @@ class Example(IdentifiedRecord):
     reference: NormalizedJSON = None
     group_id: Identifier | None = None
     tags: tuple[Identifier, ...] = ()
+    relevant_ids: tuple[Identifier, ...] | None = None
+    """IDs of the documents a retriever should find (RAG retrieval metrics); not identity."""
     metadata: dict[str, JsonValue] = Field(default_factory=dict)
 
     def identity(self) -> object:
@@ -123,6 +125,8 @@ class TargetOutput(Record):
 
     output: Text
     contexts: tuple[Text, ...] | None = None
+    retrieved_ids: tuple[Identifier, ...] | None = None
+    """Ranked IDs of the documents the retriever returned (RAG); not part of identity."""
     usage: dict[str, JsonValue] = Field(default_factory=dict)
     latency_ms: NonNegative = 0
 

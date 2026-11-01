@@ -11,7 +11,7 @@ import typer
 from rich.table import Table
 
 from evalhawk.cli import templates
-from evalhawk.cli._shared import console, select_run, user_errors
+from evalhawk.cli._shared import console, estimate_table, select_run, user_errors
 from evalhawk.config import CODE_JUDGE, Config, load_config
 from evalhawk.core.errors import ConfigError, DataError
 from evalhawk.core.splits import SplitSet
@@ -409,8 +409,48 @@ def cascade_command(
             console.print("Chosen on dev: confirm it on test before trusting the cost saving.")
 
 
+def retrieval_command(
+    run: Annotated[str, typer.Option("--run")],
+    k: Annotated[int, typer.Option(help="Cut-off rank for @k metrics")] = 5,
+    config: ConfigOption = Path("evalhawk.toml"),
+    db: DbOption = None,
+    seed: int = 0,
+    n_boot: int = 2000,
+) -> None:
+    """RAG retrieval quality (hit@k, recall@k, precision@k, MRR, nDCG@k) with intervals."""
+    import numpy as np
+
+    from evalhawk.services.retrieval import run_retrieval
+
+    with user_errors(), open_store(database(db, config)) as store:
+        execution = select_run(store, run)
+        report = run_retrieval(
+            store, execution, k=k, rng=np.random.default_rng(seed), n_boot=n_boot
+        )
+        s = report.summary
+        estimate_table(
+            f"Retrieval quality ({report.queries} queries)",
+            [
+                (f"hit@{k}", s.hit),
+                (f"recall@{k}", s.recall),
+                (f"precision@{k}", s.precision),
+                ("MRR", s.mrr),
+                (f"nDCG@{k}", s.ndcg),
+            ],
+        )
+        if report.skipped:
+            console.print(f"{report.skipped} answers skipped: no relevant_ids or retrieved_ids.")
+
+
 judges_app.command("status")(status_command)
 judges_app.command("cascade")(cascade_command)
 judges_app.command("compare")(compare_judges_command)
 
-__all__ = ["eval_command", "export_command", "init_command", "judges_app", "ui_command"]
+__all__ = [
+    "eval_command",
+    "export_command",
+    "init_command",
+    "judges_app",
+    "retrieval_command",
+    "ui_command",
+]
