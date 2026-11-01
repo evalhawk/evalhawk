@@ -1,0 +1,42 @@
+# Example: block a pull request only when the new version is *significantly* worse.
+# Copy to .github/workflows/evalhawk-gate.yml in your app's repository.
+#
+# It evaluates the main branch's version and the PR's version on the same dataset, with
+# the same judge and locked splits, then runs the EvalHawk gate:
+#   exit 0 = ok (better or no significant change), 1 = significant regression, 2 = error.
+name: EvalHawk gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    env:
+      JUDGE_API_KEY: ${{ secrets.JUDGE_API_KEY }}   # read via api_key_env in evalhawk.toml
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      # Evaluate the baseline (main) and the candidate (this PR) into one database.
+      - name: Evaluate main
+        run: |
+          git worktree add ../baseline origin/main
+          (cd ../baseline && uvx --from evalhawk evalhawk eval --target-version main --db "$GITHUB_WORKSPACE/eval.db")
+      - name: Evaluate this PR
+        run: uvx --from evalhawk evalhawk eval --target-version pr --db eval.db
+
+      - name: Gate
+        uses: evalhawk/evalhawk@main        # pin to a release tag once one exists
+        with:
+          db: eval.db
+          baseline: main
+          candidate: pr
+          criterion: correctness
+          corrected: "false"   # "true" once you have human labels in a shared database
+          fail-on: worse

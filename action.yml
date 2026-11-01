@@ -1,0 +1,61 @@
+name: EvalHawk gate
+description: >-
+  Fail a pull request only on a statistically significant regression between two
+  evaluated versions (optionally bias-corrected for the judge's errors).
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  db:
+    description: Path to the EvalHawk database containing both runs.
+    required: true
+  baseline:
+    description: Baseline run (version name or run ID).
+    required: true
+  candidate:
+    description: Candidate run (version name or run ID).
+    required: true
+  criterion:
+    description: Criterion name (needed when a run has several).
+    required: false
+    default: ""
+  judge:
+    description: Judge name (needed when a criterion has several judges).
+    required: false
+    default: ""
+  corrected:
+    description: '"true" to use the bias-corrected difference (needs dev human labels).'
+    required: false
+    default: "false"
+  fail-on:
+    description: '"worse" (default) or "inconclusive".'
+    required: false
+    default: worse
+  python-version:
+    description: Python version for running EvalHawk.
+    required: false
+    default: "3.12"
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v10.2.0
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Run the EvalHawk gate
+      shell: bash
+      env:
+        EH_DB: ${{ inputs.db }}
+        EH_BASELINE: ${{ inputs.baseline }}
+        EH_CANDIDATE: ${{ inputs.candidate }}
+        EH_CRITERION: ${{ inputs.criterion }}
+        EH_JUDGE: ${{ inputs.judge }}
+        EH_CORRECTED: ${{ inputs.corrected }}
+        EH_FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        args=(gate --db "$EH_DB" --baseline "$EH_BASELINE" --candidate "$EH_CANDIDATE" --fail-on "$EH_FAIL_ON")
+        [ -n "$EH_CRITERION" ] && args+=(--criterion "$EH_CRITERION")
+        [ -n "$EH_JUDGE" ] && args+=(--judge "$EH_JUDGE")
+        [ "$EH_CORRECTED" = "true" ] && args+=(--corrected)
+        uv tool run --from "${{ github.action_path }}" evalhawk "${args[@]}"

@@ -123,6 +123,26 @@ threshold = 0.95
 
 The threshold is chosen on **dev**; confirm the accuracy on test before trusting the saving.
 
+### Compare versions and gate pull requests
+
+```bash
+uv run evalhawk eval --target-version v2                       # same dataset, new app version
+uv run evalhawk compare --baseline v1 --candidate v2 --db .evalhawk/eval.db --criterion correctness
+uv run evalhawk compare ... --corrected                        # remove the judge's bias
+uv run evalhawk gate --baseline v1 --candidate v2 --db .evalhawk/eval.db --criterion correctness
+```
+
+`--corrected` divides the judged difference by the judge's Youden J (sensitivity +
+specificity − 1, measured on dev human labels of both versions), because a lenient or noisy
+judge shrinks real differences towards zero. Its interval includes the uncertainty of the
+judge's calibration, so it is **wider**: correction removes bias, it cannot add information.
+A coverage simulation checks that its 95% intervals contain the true difference ~95% of
+the time.
+
+`evalhawk gate` is for CI: exit **0** = no significant regression, **1** = significantly
+worse (or, with `--fail-on inconclusive`, not provably as good), **2** = error. A reusable
+GitHub Action is in `action.yml`; see `examples/ci/evalhawk-gate.yml`.
+
 ### Built-in criteria and code checks
 
 | Built-in template | Needs | Code check | Options |

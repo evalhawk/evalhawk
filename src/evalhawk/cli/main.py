@@ -10,9 +10,11 @@ from rich.table import Table
 from evalhawk import __version__
 from evalhawk.cli import live
 from evalhawk.cli._shared import console, estimate_table, report_context, select_run, user_errors
-from evalhawk.core.errors import DataError
+from evalhawk.core.errors import DataError, EvalhawkError
 from evalhawk.core.models import Criterion, Run, Split
+from evalhawk.core.protocols import Store
 from evalhawk.core.splits import SplitSet
+from evalhawk.services.compare import CorrectedComparison, corrected_compare
 from evalhawk.services.compare import compare as compare_runs
 from evalhawk.services.estimate import report as estimate_run
 from evalhawk.services.importing import import_recorded
@@ -189,8 +191,16 @@ def compare_command(
     judge: Annotated[
         str | None, typer.Option(help="Judge name, if a criterion has several")
     ] = None,
+    corrected: Annotated[
+        bool, typer.Option(help="Correct for the judge's errors using dev human labels")
+    ] = False,
 ) -> None:
-    """Paired judge-proxy change; independent-pair planning uses a target effect fraction."""
+    """Paired v2-v1 change; --corrected removes the judge's bias using human labels."""
+    if corrected:
+        with _user_errors(), open_store(db) as store:
+            result = _corrected(store, baseline, candidate, criterion, judge, tag, seed, n_boot)
+            _print_corrected(result)
+        return
     with _user_errors(), open_store(db) as store:
         first = _select_run(store, baseline)
         second = _select_run(store, candidate)
@@ -253,3 +263,99 @@ def audit_command(
         for purpose, at in store.test_reads(splits.id):
             history.add_row(at, purpose)
         console.print(history)
+
+
+def _corrected(
+    store: Store,
+    baseline: str,
+    candidate: str,
+    criterion: str | None,
+    judge: str | None,
+    tag: str | None,
+    seed: int,
+    n_boot: int,
+) -> CorrectedComparison:
+    first = select_run(store, baseline)
+    second = select_run(store, candidate)
+    criterion_id, judge_id, splits = report_context(first, criterion=criterion, judge=judge)
+    other = report_context(second, criterion=criterion, judge=judge)
+    if (criterion_id, judge_id, splits.id) != (other[0], other[1], other[2].id):
+        raise DataError("comparison requires the same criterion, judge and split set")
+    return corrected_compare(
+        store,
+        baseline_id=first.id,
+        candidate_id=second.id,
+        criterion_id=criterion_id,
+        judge_id=judge_id,
+        split_set_id=splits.id,
+        rng=np.random.default_rng(seed),
+        tag=tag,
+        n_boot=n_boot,
+    )
+
+
+def _print_corrected(result: CorrectedComparison) -> None:
+    estimate_table(
+        "Candidate minus baseline",
+        [("Judged (uncorrected)", result.proxy), ("Corrected for the judge", result.difference)],
+    )
+    console.print(
+        f"Decision: {result.decision}; calibration labels={result.calibration_pairs}; "
+        f"unmatched={result.unmatched}; UNKNOWN pairs={result.unknown_pairs}"
+    )
+    for warning in result.warnings:
+        console.print(warning)
+
+
+@app.command("gate")
+def gate_command(
+    baseline: Annotated[str, typer.Option("--baseline")],
+    candidate: Annotated[str, typer.Option("--candidate")],
+    db: Annotated[Path, typer.Option("--db")],
+    criterion: Annotated[str | None, typer.Option(help="Criterion name")] = None,
+    judge: Annotated[str | None, typer.Option(help="Judge name")] = None,
+    corrected: Annotated[bool, typer.Option(help="Use the bias-corrected difference")] = False,
+    fail_on: Annotated[
+        str, typer.Option(help="'worse' (default) or 'inconclusive' to also fail when unsure")
+    ] = "worse",
+    tag: str | None = None,
+    seed: int = 0,
+    n_boot: int = 2000,
+) -> None:
+    """CI gate. Exit 0 = OK, 1 = significant regression, 2 = error (bad config, no data...)."""
+    if fail_on not in {"worse", "inconclusive"}:
+        console.print("Error: --fail-on must be 'worse' or 'inconclusive'")
+        raise typer.Exit(code=2)
+    try:
+        with open_store(db) as store:
+            if corrected:
+                result = _corrected(store, baseline, candidate, criterion, judge, tag, seed, n_boot)
+                _print_corrected(result)
+                decision = result.decision
+            else:
+                first, second = select_run(store, baseline), select_run(store, candidate)
+                criterion_id, judge_id, splits = report_context(
+                    first, criterion=criterion, judge=judge
+                )
+                proxy = compare_runs(
+                    store,
+                    baseline_id=first.id,
+                    candidate_id=second.id,
+                    criterion_id=criterion_id,
+                    judge_id=judge_id,
+                    split_set_id=splits.id,
+                    rng=np.random.default_rng(seed),
+                    tag=tag,
+                    n_boot=n_boot,
+                )
+                estimate_table(
+                    "Candidate minus baseline: judge proxy",
+                    [("Paired difference", proxy.difference)],
+                )
+                decision = proxy.decision
+    except (EvalhawkError, ValueError, OSError) as exc:
+        console.print(f"Error: {exc}")
+        raise typer.Exit(code=2) from exc
+    failed = decision == "WORSE" or (fail_on == "inconclusive" and decision == "INCONCLUSIVE")
+    console.print(f"GATE {'FAILED' if failed else 'PASSED'}: {decision}")
+    raise typer.Exit(code=1 if failed else 0)
