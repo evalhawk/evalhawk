@@ -17,12 +17,12 @@ def parse_row(
     example_fields = {
         key: value
         for key, value in row.items()
-        if key in {"input", "reference", "group_id", "tags"}
+        if key in {"input", "reference", "group_id", "tags", "relevant_ids"}
     }
     output_fields = {
         key: value
         for key, value in row.items()
-        if key in {"output", "contexts", "usage", "latency_ms"}
+        if key in {"output", "contexts", "retrieved_ids", "usage", "latency_ms"}
     }
     metadata = row.get("metadata", {})
     if not isinstance(metadata, dict):

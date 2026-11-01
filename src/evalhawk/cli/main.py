@@ -57,6 +57,7 @@ app.command("init")(live.init_command)
 app.command("eval")(live.eval_command)
 app.command("export")(live.export_command)
 app.command("ui")(live.ui_command)
+app.command("retrieval")(live.retrieval_command)
 app.add_typer(live.judges_app, name="judges")
 
 # Backwards-compatible names for the helpers that moved to cli/_shared.py.

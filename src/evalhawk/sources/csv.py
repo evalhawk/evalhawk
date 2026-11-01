@@ -36,7 +36,7 @@ class CSVSource:
                     }
                     if "tags" in row:
                         row["tags"] = str(row["tags"]).split("|")
-                    for field in ("contexts", "metadata", "usage"):
+                    for field in ("contexts", "retrieved_ids", "relevant_ids", "metadata", "usage"):
                         if field in row:
                             try:
                                 row[field] = json.loads(str(row[field]))

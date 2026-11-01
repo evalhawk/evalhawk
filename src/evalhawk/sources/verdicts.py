@@ -38,7 +38,15 @@ class VerdictSource:
                         }
                         if "tags" in row:
                             row["tags"] = str(row["tags"]).split("|")
-                        for field in ("contexts", "metadata", "usage", "labels", "repeat_index"):
+                        for field in (
+                            "contexts",
+                            "retrieved_ids",
+                            "relevant_ids",
+                            "metadata",
+                            "usage",
+                            "labels",
+                            "repeat_index",
+                        ):
                             if field in row:
                                 try:
                                     row[field] = json.loads(str(row[field]))

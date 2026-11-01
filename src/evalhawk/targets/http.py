@@ -59,6 +59,7 @@ class HttpTarget:
         body: the JSON body, with placeholders, e.g. ``{"message": "{{input}}"}``.
         answer_path: JSONPath to the answer text, e.g. ``$.reply.text``.
         contexts_path: JSONPath to retrieved documents for RAG, e.g. ``$.sources[*].text``.
+        retrieved_ids_path: JSONPath to their IDs, e.g. ``$.sources[*].id`` (retrieval metrics).
         headers: HTTP headers. ``${ENV}`` values are expanded when the config is loaded.
     """
 
@@ -69,6 +70,7 @@ class HttpTarget:
         body: Any = None,
         answer_path: str = "$.output",
         contexts_path: str | None = None,
+        retrieved_ids_path: str | None = None,
         method: str = "POST",
         headers: Mapping[str, str] | None = None,
         timeout: float = 60.0,
@@ -77,6 +79,8 @@ class HttpTarget:
         jsonpath.validate(answer_path)
         if contexts_path:
             jsonpath.validate(contexts_path)
+        if retrieved_ids_path:
+            jsonpath.validate(retrieved_ids_path)
         if isinstance(body, str):
             # A JSON body written as a string ('{"message": "{{input}}"}'): parse it now, so
             # placeholders are filled as JSON values and an object is sent, not a string.
@@ -88,6 +92,7 @@ class HttpTarget:
         self.body = body if body is not None else {"input": "{{input}}"}
         self.answer_path = answer_path
         self.contexts_path = contexts_path
+        self.retrieved_ids_path = retrieved_ids_path
         self.method = method.upper()
         self.headers = dict(headers or {})
         self.timeout = float(timeout)
@@ -114,4 +119,9 @@ class HttpTarget:
         contexts = None
         if self.contexts_path:
             contexts = tuple(str(item) for item in jsonpath.find(data, self.contexts_path))
-        return TargetOutput(output=answers[0], contexts=contexts, latency_ms=latency)
+        retrieved = None
+        if self.retrieved_ids_path:
+            retrieved = tuple(str(item) for item in jsonpath.find(data, self.retrieved_ids_path))
+        return TargetOutput(
+            output=answers[0], contexts=contexts, retrieved_ids=retrieved, latency_ms=latency
+        )

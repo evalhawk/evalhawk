@@ -10,6 +10,10 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- RAG retrieval metrics (Phase 8): `stats.retrieval` (hit@k, recall@k, precision@k, MRR,
+  nDCG@k with cluster-bootstrap intervals), optional `Example.relevant_ids` and
+  `TargetOutput.retrieved_ids` (not part of IDs), `retrieved_ids_path` on HTTP targets,
+  `Store.iter_traces()`, and `evalhawk retrieval`.
 - Bias-corrected paired comparison (Phase 7): `stats.paired_correction` (true difference =
   judged difference / Youden J, two-source bootstrap, coverage-tested), `compare --corrected`,
   and the CI gate `evalhawk gate` (exit 0/1/2) with a composite GitHub Action (`action.yml`)

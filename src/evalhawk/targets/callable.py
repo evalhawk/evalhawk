@@ -11,15 +11,19 @@ from evalhawk.core.models import Example, TargetOutput
 
 
 def to_output(result: Any, *, latency_ms: float = 0.0) -> TargetOutput:
-    """Accept ``str``, :class:`TargetOutput`, or ``{"output": ..., "contexts": [...]}``."""
+    """Accept ``str``, :class:`TargetOutput`, or ``{"output": ..., "contexts": [...],
+    "retrieved_ids": [...]}``."""
     if isinstance(result, TargetOutput):
         return result if result.latency_ms else result.model_copy(update={"latency_ms": latency_ms})
     if isinstance(result, str):
         return TargetOutput(output=result, latency_ms=latency_ms)
     if isinstance(result, Mapping) and "output" in result:
-        data = {k: v for k, v in result.items() if k in {"output", "contexts", "usage"}}
-        if data.get("contexts") is not None:
-            data["contexts"] = tuple(str(item) for item in data["contexts"])
+        data = {
+            k: v for k, v in result.items() if k in {"output", "contexts", "retrieved_ids", "usage"}
+        }
+        for key in ("contexts", "retrieved_ids"):
+            if data.get(key) is not None:
+                data[key] = tuple(str(item) for item in data[key])
         return TargetOutput.model_validate({**data, "latency_ms": latency_ms})
     raise DataError(
         f"target returned {type(result).__name__}; return a str, a TargetOutput, or a dict "

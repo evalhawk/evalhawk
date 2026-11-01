@@ -339,6 +339,15 @@ class SQLiteStore:
             if (run := Run.model_validate_json(payload)).target_version == target_version
         ]
 
+    def iter_traces(self, run_id: str) -> Iterator[Trace]:
+        """Every trace of a run, ordered by example and repeat."""
+        rows = self._connection.execute(
+            "SELECT record FROM traces WHERE run_id=? ORDER BY example_id, repeat_index",
+            (run_id,),
+        )
+        for row in rows:
+            yield Trace.model_validate_json(row[0])
+
     def list_runs(self) -> list[Run]:
         """Every run, newest first."""
         rows = self._connection.execute("SELECT record FROM runs").fetchall()
