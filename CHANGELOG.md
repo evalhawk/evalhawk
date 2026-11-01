@@ -10,6 +10,10 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Bias-corrected paired comparison (Phase 7): `stats.paired_correction` (true difference =
+  judged difference / Youden J, two-source bootstrap, coverage-tested), `compare --corrected`,
+  and the CI gate `evalhawk gate` (exit 0/1/2) with a composite GitHub Action (`action.yml`)
+  and an example workflow.
 - Judge cascades (Phase 6): `CascadeJudge` (`type = "cascade"`, nests, cycle-checked),
   `stats.selective` (risk-coverage curve, threshold for a target accuracy, error
   correlation), and `evalhawk judges cascade` to tune the threshold on dev labels.
