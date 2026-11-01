@@ -594,28 +594,26 @@ version = 1                              # config format version (a one-way door
 
 [project]
 name  = "support-bot"
-store = "sqlite:///.evalhawk/eval.db"    # keep on a local disk, not a synced folder
+store = ".evalhawk/eval.db"             # keep on a local disk, not a synced folder
 
 # The app under test. Pick ONE target type (§5.1).
 [target]
 type          = "http"
 url           = "https://bot.internal/api/chat"
 headers       = { Authorization = "Bearer ${BOT_API_KEY}" }   # expanded from the environment
-body          = '{"message": "{{input}}"}'
+body          = { message = "{{input}}" }
 answer_path   = "$.reply.text"
 contexts_path = "$.reply.sources[*].text"                     # only for kind = "rag"
 timeout       = 30
 # type = "callable"; callable = "my_app.bot:answer"            # alternative: a Python function
 
 [splits]
-train = 0.2
-dev   = 0.4
-test  = 0.4
-salt  = "v1"                            # changing the salt = a brand-new split
-by    = "group_id"                      # keep related examples in the same pile
+ratios = [0.2, 0.4, 0.4]                # train, dev, test
+salt   = "v1"                           # changing the salt = a brand-new split
+by     = "group_id"                     # keep related examples in the same pile
 
 [[criteria]]
-id       = "no_fabrication"
+name     = "no_fabrication"
 question = "Is every factual claim in the answer supported by the provided context?"
 
 [evaluations.support_rag]

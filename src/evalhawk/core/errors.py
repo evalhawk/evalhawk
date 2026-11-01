@@ -41,3 +41,16 @@ class JudgeTooWeakError(EvalhawkError):
     better than random, so correction would amplify noise rather than reduce it.
     Improve the judge or its prompt to get better signals.
     """
+
+
+class CallError(EvalhawkError):
+    """A call to a judge or target failed.
+
+    ``retryable`` is True for temporary problems (rate limits, server errors, timeouts,
+    dropped connections), so the runner retries them with backoff; other failures are
+    recorded and not retried.
+    """
+
+    def __init__(self, message: str, *, retryable: bool = False) -> None:
+        super().__init__(message)
+        self.retryable = retryable

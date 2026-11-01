@@ -1,6 +1,6 @@
 # Agents
 
-!!! info "Planned: Phase 4 (final outcomes and repeats); later (tool calls and steps)"
+!!! success "Outcome checks and repeats available now (Phase 4). pass^k reporting, tool-call and step checks: later"
 
 ## What it covers
 
@@ -92,12 +92,12 @@ The agent's final answer (and, later, its tool-call trace) comes back through th
 [target]
 type    = "http"
 url     = "https://agent.internal/run"
-body    = '{"task": "{{input}}"}'
+body    = { task = "{{input}}" }
 answer_path = "$.final_answer"
 timeout = 300                      # agents are slow
 
 [[criteria]]
-id       = "task_completed"
+name       = "task_completed"
 question = "Did the agent fully complete the task described in the input?"
 
 [evaluations.booking_agent]

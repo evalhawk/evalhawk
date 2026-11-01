@@ -214,7 +214,7 @@ def test_sql_split_triggers_and_test_access_log(tmp_path: Path) -> None:
             with pytest.raises(sqlite3.IntegrityError, match="immutable"):
                 connection.execute(statement)
         assert connection.execute("SELECT count(*) FROM test_access_log").fetchone()[0] == 1
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
 
 
 def test_batch_is_atomic_on_missing_reference(store: Store) -> None:
@@ -309,7 +309,7 @@ def test_locked_snapshot_and_multiple_unknown_annotations(store: Store) -> None:
 def test_sqlite_rejects_newer_schema_and_wraps_open_failure(tmp_path: Path) -> None:
     path = tmp_path / "future.db"
     with sqlite3.connect(path) as connection:
-        connection.execute("PRAGMA user_version=3")
+        connection.execute("PRAGMA user_version=4")
     with pytest.raises(StoreError, match="newer"):
         SQLiteStore(path)
     with pytest.raises(StoreError, match="cannot open"):

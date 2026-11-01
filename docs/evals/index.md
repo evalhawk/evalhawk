@@ -1,9 +1,10 @@
 # Evaluating AI systems
 
-!!! info "Planned"
-    This section describes how EvalHawk **will** work. Nothing here is implemented yet;
-    the phase for each feature is shown on its page. Config and output formats are drafts
-    and may change.
+!!! success "Live evaluation is available (Phase 4)"
+    Built-in templates, custom questions and code checks run today with `evalhawk eval`
+    (see [Getting started](../getting-started.md#live-evaluation)). Each page says which of
+    its features are available and which are still planned. Before 1.0 the config format
+    may still change.
 
 This section is organised **by the kind of AI system you want to test**. Each page follows
 the same structure:
@@ -67,15 +68,15 @@ All pages use the same config shape (`evalhawk.toml`):
 type = "http"            # or "callable", "openai_compatible", "recorded"
 
 [[criteria]]             # a custom question
-id       = "polite"
+name       = "polite"
 question = "Is the answer polite and professional?"
 
 [[criteria]]             # a built-in template
-id       = "answer_relevance"
+name       = "answer_relevance"
 template = "answer_relevance"
 
 [[criteria]]             # a code check: no judge needed
-id    = "under_150_words"
+name    = "under_150_words"
 check = { type = "max_words", value = 150 }
 
 [evaluations.support]

@@ -230,3 +230,23 @@ class Calibration(Record):
     n: Annotated[int, Field(ge=0)]
     computed_at: AwareDatetime = Field(default_factory=lambda: datetime.now(UTC))
     status: Literal["ok", "stale", "insufficient"] = "ok"
+
+
+def judgment_key(example: Example, trace: Trace, criterion: Criterion, judge_id: str) -> str:
+    """Identify one judgment by everything the judge sees, and nothing else.
+
+    Run, version and repeat index are deliberately excluded: if two traces show the
+    judge the same question, reference, answer and contexts, a deterministic judge gives
+    the same verdict, so it is never paid for twice. Verdicts are still stored per trace.
+    """
+    return content_id(
+        [
+            "judgment-v1",
+            example.input,
+            example.reference,
+            trace.output,
+            trace.contexts,
+            criterion.id,
+            judge_id,
+        ]
+    )

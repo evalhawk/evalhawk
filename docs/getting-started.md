@@ -38,6 +38,61 @@ uv run pre-commit install     # run the checks automatically on every commit
 
 Read the [engineering standards](development/standards.md) before your first pull request.
 
+## Live evaluation
+
+Create a runnable project, then evaluate its tiny support bot:
+
+```bash
+uv run evalhawk init my-eval
+cd my-eval
+uv run evalhawk eval --target-version v1        # runs app.py on data/questions.jsonl
+uv run evalhawk eval --target-version v1        # again: resumes, nothing is paid twice
+uv run evalhawk judges status --run v1
+uv run evalhawk export --run v1 --out results.jsonl
+```
+
+The quickstart's checks are **code checks** (`not_empty`, `concise`, `no_personal_data`),
+so it runs with no model at all. Even exact checks get honest ranges: 8 of 8 passing is
+reported as 100% [67.6%, 100%]. The bot's weak keyword matching makes it fall back to a
+reply containing an e-mail address for 4 of 8 questions, and the PII check catches it.
+
+To add **LLM-judged** criteria (`correctness`, `polite`), run a judge model. A free local
+one: install [Ollama](https://ollama.com), run `ollama pull qwen3:8b`, then switch the
+`criteria = ...` line under `[evaluations.support]` in `evalhawk.toml` to the commented
+version that includes them. Any OpenAI-compatible endpoint works: set `base_url`, `model`
+and, for hosted APIs, `api_key_env` (the key is read from the environment, never stored).
+
+### What `eval` does
+
+1. Validates the config and the data **before any call**: unknown judges, RAG checks on a
+   non-RAG evaluation, or a missing reference answer fail immediately.
+2. Locks every question into train/dev/test (before any outcome exists).
+3. Calls your app (or reuses the run's answers), then each judge, with limited concurrency,
+   retries for rate limits and server errors, timeouts and the `max_cost_usd` budget.
+4. Reuses a cached judgment whenever a judge would see exactly the same content (a new
+   version with an unchanged answer, or a repeat), so nothing is paid for twice.
+5. Prints the **judged** pass rates. To get **corrected** rates, label about 10 PASS and 10
+   FAIL answers per LLM criterion (the labelling UI), then run
+   `evalhawk report --run v1 --criterion correctness`.
+
+### Built-in criteria and code checks
+
+| Built-in template | Needs | Code check | Options |
+|---|---|---|---|
+| `answer_relevance` | input, output | `exact_match` | `normalise` |
+| `correctness` | + reference | `contains`, `not_contains` | `value`, `case_sensitive` |
+| `faithfulness` | + contexts (rag) | `regex` | `pattern` |
+| `context_relevance` | + contexts (rag) | `max_words`, `min_words`, `max_chars` | `value` |
+| `context_recall` | + contexts, reference | `not_empty` | |
+| `summary_faithfulness` | input = source | `one_of` | `values`, `normalise` |
+| `summary_coverage` | input = source | `valid_json` | |
+| `safety_harmful`, `safety_toxic` | output | `json_schema` | `schema` (inline table) |
+| `task_completed` | input, output | `field_match` | `field` (dotted path) |
+| `instruction_following` | input, output | `pii` | `patterns` (email, phone, card_number) |
+
+Or write your own yes/no question with `question = "..."`, or wrap a Python function as a
+judge with `[judges.mine] type = "function"` and `callable = "module:function"`.
+
 ## Offline support-bot demo
 
 ```bash

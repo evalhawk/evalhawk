@@ -1,20 +1,17 @@
 """Entry point for the ``evalhawk`` command."""
 
-from collections.abc import Iterator
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
 import typer
-from rich.console import Console
 from rich.table import Table
 
 from evalhawk import __version__
-from evalhawk.core.errors import DataError, EvalhawkError
+from evalhawk.cli import live
+from evalhawk.cli._shared import console, estimate_table, report_context, select_run, user_errors
+from evalhawk.core.errors import DataError
 from evalhawk.core.models import Criterion, Run, Split
-from evalhawk.core.protocols import Store
-from evalhawk.core.results import Estimate
 from evalhawk.core.splits import SplitSet
 from evalhawk.services.compare import compare as compare_runs
 from evalhawk.services.estimate import report as estimate_run
@@ -52,55 +49,18 @@ def main(
     """Calibrate LLM judges against humans and report bias-corrected results."""
 
 
-console = Console(markup=False, highlight=False)
 demo = typer.Typer(help="Generate an offline synthetic evaluation.", no_args_is_help=True)
 app.add_typer(demo, name="demo")
+app.command("init")(live.init_command)
+app.command("eval")(live.eval_command)
+app.command("export")(live.export_command)
+app.add_typer(live.judges_app, name="judges")
 
-
-@contextmanager
-def _user_errors() -> Iterator[None]:
-    try:
-        yield
-    except (EvalhawkError, ValueError, OSError) as exc:
-        console.print(f"Error: {exc}")
-        raise typer.Exit(code=1) from exc
-
-
-def _select_run(store: Store, selection: str) -> Run:
-    exact = store.get_run(selection)
-    if exact:
-        return exact
-    matches = store.find_runs(selection)
-    if len(matches) != 1:
-        raise DataError(
-            f"run {selection!r}: found {len(matches)} executions; supply an exact run ID"
-        )
-    return matches[0]
-
-
-def _report_context(run: Run) -> tuple[str, str, SplitSet]:
-    config = run.config_snapshot
-    criterion_id = config.get("criterion_id")
-    judge_id = config.get("judge_id")
-    if not isinstance(criterion_id, str) or not isinstance(judge_id, str) or "splits" not in config:
-        raise DataError("run has no recorded-import configuration; select an imported execution")
-    return criterion_id, judge_id, SplitSet.model_validate(config["splits"])
-
-
-def _estimate_table(title: str, rows: list[tuple[str, Estimate]]) -> None:
-    table = Table(title=title)
-    for heading in ("Metric", "Estimate", "Interval", "Confidence", "n", "Method"):
-        table.add_column(heading)
-    for label, result in rows:
-        table.add_row(
-            label,
-            f"{result.point:.3f}",
-            f"[{result.low:.3f}, {result.high:.3f}]",
-            f"{result.confidence:.0%}",
-            str(result.n),
-            result.method,
-        )
-    console.print(table)
+# Backwards-compatible names for the helpers that moved to cli/_shared.py.
+_user_errors = user_errors
+_select_run = select_run
+_report_context = report_context
+_estimate_table = estimate_table
 
 
 @demo.command("init")
@@ -164,11 +124,17 @@ def report_command(
     tag: str | None = None,
     seed: int = 0,
     n_boot: int = 2000,
+    criterion: Annotated[str | None, typer.Option(help="Criterion name (evaluated runs)")] = None,
+    judge: Annotated[
+        str | None, typer.Option(help="Judge name, if a criterion has several")
+    ] = None,
 ) -> None:
     """Judge report card and representative-case rates with confidence intervals."""
     with _user_errors(), open_store(db) as store:
         execution = _select_run(store, run)
-        criterion_id, judge_id, splits = _report_context(execution)
+        criterion_id, judge_id, splits = _report_context(
+            execution, criterion=criterion, judge=judge
+        )
         result = estimate_run(
             store,
             run_id=execution.id,
@@ -218,13 +184,19 @@ def compare_command(
     seed: int = 0,
     target_effect: float = 0.05,
     n_boot: int = 2000,
+    criterion: Annotated[str | None, typer.Option(help="Criterion name (evaluated runs)")] = None,
+    judge: Annotated[
+        str | None, typer.Option(help="Judge name, if a criterion has several")
+    ] = None,
 ) -> None:
     """Paired judge-proxy change; independent-pair planning uses a target effect fraction."""
     with _user_errors(), open_store(db) as store:
         first = _select_run(store, baseline)
         second = _select_run(store, candidate)
-        criterion_id, judge_id, splits = _report_context(first)
-        other_criterion, other_judge, other_splits = _report_context(second)
+        criterion_id, judge_id, splits = _report_context(first, criterion=criterion, judge=judge)
+        other_criterion, other_judge, other_splits = _report_context(
+            second, criterion=criterion, judge=judge
+        )
         if (criterion_id, judge_id, splits.id) != (other_criterion, other_judge, other_splits.id):
             raise DataError("comparison requires the same criterion, judge and split set")
         result = compare_runs(
@@ -266,7 +238,7 @@ def audit_command(
     """Show locked pile sizes and outcome-read history without reading outcomes."""
     with _user_errors(), open_store(db) as store:
         execution = _select_run(store, run)
-        _, _, splits = _report_context(execution)
+        splits = SplitSet.model_validate(execution.config_snapshot["splits"])
         counts = store.split_counts(splits.id, tag=tag)
         table = Table(title=f"Locked splits: {splits.id}")
         table.add_column("Split")
