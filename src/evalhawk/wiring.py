@@ -24,6 +24,7 @@ from evalhawk.config import (
 from evalhawk.core.errors import ConfigError, DataError
 from evalhawk.core.models import Criterion, Example, Run, TargetOutput
 from evalhawk.core.protocols import Judge, Target
+from evalhawk.judges.cascade import CascadeJudge
 from evalhawk.judges.code import CodeCheckJudge
 from evalhawk.judges.criteria import BUILTIN_CRITERIA
 from evalhawk.judges.function import FunctionJudge
@@ -100,9 +101,38 @@ def _plugin_judges() -> dict[str, Any]:
     return {entry.name: entry for entry in entry_points(group="evalhawk.judges")}
 
 
-def build_judge(name: str, config: JudgeConfig, *, base_dir: Path) -> Judge:
-    """Build ``[judges.<name>]``; ``${VAR}`` placeholders are expanded here."""
+def build_judge(
+    name: str,
+    config: JudgeConfig,
+    *,
+    base_dir: Path,
+    others: dict[str, JudgeConfig] | None = None,
+    _building: tuple[str, ...] = (),
+) -> Judge:
+    """Build ``[judges.<name>]``; ``${VAR}`` placeholders are expanded here.
+
+    ``type = "cascade"`` refers to two other judges by name (``cheap``, ``strong``), which
+    may themselves be cascades; cycles are rejected.
+    """
     options = expand_env(config.options())
+    if config.type == "cascade":
+        if name in _building:
+            raise ConfigError(f"judge cascade cycle: {' -> '.join((*_building, name))}")
+        others = others or {}
+        parts: dict[str, Judge] = {}
+        for role in ("cheap", "strong"):
+            ref = str(options.get(role, ""))
+            if ref not in others:
+                raise ConfigError(f"[judges.{name}]: {role} = {ref!r} is not a defined judge")
+            parts[role] = build_judge(
+                ref, others[ref], base_dir=base_dir, others=others, _building=(*_building, name)
+            )
+        try:
+            return CascadeJudge(
+                parts["cheap"], parts["strong"], threshold=float(options.get("threshold", 0.9))
+            )
+        except ValueError as exc:
+            raise ConfigError(f"[judges.{name}]: {exc}") from exc
     try:
         if config.type == "openai_compatible":
             return OpenAICompatibleJudge(**options)
@@ -114,7 +144,7 @@ def build_judge(name: str, config: JudgeConfig, *, base_dir: Path) -> Judge:
             return plugins[config.type].load()(**options)
     except TypeError as exc:
         raise ConfigError(f"[judges.{name}] type={config.type!r}: {exc}") from exc
-    known = ["openai_compatible", "function", *sorted(plugins)]
+    known = ["openai_compatible", "function", "cascade", *sorted(plugins)]
     raise ConfigError(f"[judges.{name}]: unknown type {config.type!r}; known: {', '.join(known)}")
 
 
@@ -161,7 +191,10 @@ def build_specs(config: Config, evaluation: str) -> tuple[list[JudgeSpec], bool]
         else:
             if judge_name not in judges:
                 judges[judge_name] = build_judge(
-                    judge_name, config.judges[judge_name], base_dir=config.base_dir
+                    judge_name,
+                    config.judges[judge_name],
+                    base_dir=config.base_dir,
+                    others=config.judges,
                 )
             judge = judges[judge_name]
         specs.append(JudgeSpec(build_criterion(criterion_config), judge))

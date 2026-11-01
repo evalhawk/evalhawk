@@ -88,6 +88,41 @@ judge is calibrated. **Label** opens one answer at a time: read it, press **P** 
 judge's verdict is never shown, so it can't sway you. After about 10 PASS and 10 FAIL
 labels, **Report** shows the judge's report card and the corrected pass rates.
 
+### Cheap judge, expensive backup (cascades)
+
+Judge each answer with two judges in one run, label some dev answers, then let EvalHawk
+pick how confident the cheap judge must be before its verdict is trusted:
+
+```toml
+[judges.small]                       # cheap: must give probabilities
+type = "openai_compatible"
+base_url = "http://localhost:11434/v1"
+model = "qwen3:1.7b"
+mode = "verdict_only"                # P(PASS) from logprobs
+
+[evaluations.support]
+criteria = { correctness = ["small", "local"] }   # both judges, same answers
+```
+
+```bash
+uv run evalhawk eval --target-version v1
+uv run evalhawk judges cascade --run v1 --criterion correctness --cheap small --strong local --target-accuracy 0.9
+```
+
+It prints the risk-coverage table (threshold, share decided by the cheap judge, accuracy
+with an interval), the chosen threshold, and **error correlation**: whether the strong
+judge is right where the cheap one is wrong. Then use it like any judge:
+
+```toml
+[judges.cascade]
+type = "cascade"
+cheap = "small"
+strong = "local"
+threshold = 0.95
+```
+
+The threshold is chosen on **dev**; confirm the accuracy on test before trusting the saving.
+
 ### Built-in criteria and code checks
 
 | Built-in template | Needs | Code check | Options |

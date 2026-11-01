@@ -10,6 +10,9 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Judge cascades (Phase 6): `CascadeJudge` (`type = "cascade"`, nests, cycle-checked),
+  `stats.selective` (risk-coverage curve, threshold for a target accuracy, error
+  correlation), and `evalhawk judges cascade` to tune the threshold on dev labels.
 - Local web UI (`evalhawk ui`, extra `[ui]`): runs dashboard, blind labelling with P/F/U
   keys and notes, judge report cards and corrected pass rates. See ADR-0014 (Proposed).
 - Live evaluation (Phase 4): `evalhawk init`, `eval`, `judges status`, `judges compare` and
