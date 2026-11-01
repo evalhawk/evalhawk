@@ -10,6 +10,8 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Local web UI (`evalhawk ui`, extra `[ui]`): runs dashboard, blind labelling with P/F/U
+  keys and notes, judge report cards and corrected pass rates. See ADR-0014 (Proposed).
 - Live evaluation (Phase 4): `evalhawk init`, `eval`, `judges status`, `judges compare` and
   `export`; `evalhawk.toml` config; OpenAI-compatible, function and code-check judges
   (13 checks); 11 built-in criteria; callable, HTTP, OpenAI-compatible and recorded

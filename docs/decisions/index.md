@@ -37,3 +37,4 @@ Do **not** write one for easily reversible choices (CLI colours, internal helper
 | [0011](0011-offline-report-contract.md) | Explicit offline report assumptions and adjudication | Proposed |
 | [0012](0012-rich-cli-tables.md) | Rich at the CLI boundary | Proposed |
 | [0013](0013-live-judging-contracts.md) | Live judging contracts | Proposed |
+| [0014](0014-web-ui.md) | A local web UI behind the `[ui]` extra | Proposed |

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ run.target_version }} · EvalHawk{% endblock %}
+{% block content %}
+<h1>Version {{ run.target_version }}</h1>
+<p class="muted small">Run {{ run.id[:12] }} · {{ run.config_snapshot.get("evaluation", "recorded import") }}
+  · started {{ run.created_at.strftime("%Y-%m-%d %H:%M") }}</p>
+<table>
+  <tr><th>Criterion</th><th>Judge</th><th>Judged pass rate</th><th>Calibration</th><th></th></tr>
+  {% for status, rate in rows %}
+  <tr>
+    <td><strong>{{ status.criterion }}</strong></td>
+    <td>{{ status.judge }}</td>
+    <td>
+      {% if rate and rate.rate %}
+        {{ "%.1f"|format(rate.rate.point * 100) }}%
+        <span class="muted small">[{{ "%.1f"|format(rate.rate.low * 100) }}–{{ "%.1f"|format(rate.rate.high * 100) }}%] · n={{ rate.rate.n }}</span>
+      {% else %}<span class="muted">–</span>{% endif %}
+    </td>
+    <td>
+      {% if status.judge == "code" %}
+        <span class="pill exact">exact, no labels needed</span>
+      {% elif status.status == "ok" %}
+        <span class="pill ok">calibrated</span>
+        <span class="muted small">{{ status.n_pass }} PASS / {{ status.n_fail }} FAIL labels</span>
+      {% else %}
+        <span class="pill insufficient">needs ~{{ status.need_more }} more labels</span>
+        <span class="muted small">{{ status.n_pass }} PASS / {{ status.n_fail }} FAIL</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if status.judge != "code" %}
+        <a href="/label/{{ run.id }}/{{ status.criterion }}">Label</a> ·
+        <a href="/report/{{ run.id }}/{{ status.criterion }}?judge={{ status.judge }}">Report</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted small">Judged pass rates are uncorrected and include every pile. Label answers to
+  calibrate each LLM judge; the report then corrects the rate for the judge's mistakes.</p>
+{% endblock %}

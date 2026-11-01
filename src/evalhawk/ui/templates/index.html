@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Runs</h1>
+<p class="muted">Every evaluation or import stored in this database, newest first.</p>
+{% if runs %}
+<table>
+  <tr><th>Version</th><th>Evaluation</th><th>Criteria</th><th>Started</th><th>Run</th></tr>
+  {% for run in runs %}
+  <tr>
+    <td><strong>{{ run.target_version }}</strong></td>
+    <td>{{ run.config_snapshot.get("evaluation", "recorded import") }}</td>
+    <td>{% for item in run.config_snapshot.get("criteria", []) %}{{ item.name }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    <td class="small">{{ run.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+    <td><a href="/runs/{{ run.id }}">{{ run.id[:12] }}</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card">No runs yet. Run <code>evalhawk eval --target-version v1</code> first.</div>
+{% endif %}
+{% endblock %}

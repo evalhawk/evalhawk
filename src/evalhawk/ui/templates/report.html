@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Report {{ criterion_name }} · EvalHawk{% endblock %}
+{% macro estimate(label, e, percent=True) %}
+<div class="card">
+  <div class="label">{{ label }}</div>
+  {% if percent %}
+  <div class="big">{{ "%.1f"|format(e.point * 100) }}%</div>
+  <div class="muted small">95% interval [{{ "%.1f"|format(e.low * 100) }}%, {{ "%.1f"|format(e.high * 100) }}%] · n={{ e.n }} · {{ e.method }}</div>
+  {% else %}
+  <div class="big">{{ "%.2f"|format(e.point) }}</div>
+  <div class="muted small">95% interval [{{ "%.2f"|format(e.low) }}, {{ "%.2f"|format(e.high) }}] · n={{ e.n }}</div>
+  {% endif %}
+</div>
+{% endmacro %}
+{% block content %}
+<p class="small"><a href="/runs/{{ run.id }}">← {{ run.target_version }}</a></p>
+<h1>{{ criterion_name }} <span class="muted small">judge: {{ entry.judge }}</span></h1>
+{% if problem %}
+<div class="card">
+  <div class="question">Not enough data for a corrected report yet</div>
+  <p class="muted">{{ problem }}</p>
+  <p><a href="/label/{{ run.id }}/{{ criterion_name }}">Label more answers →</a></p>
+</div>
+{% else %}
+<h2>Judge report card <span class="muted small">(dev pile, against human labels)</span></h2>
+<div class="grid">
+  {{ estimate("Sensitivity: agrees on good answers", result.sensitivity) }}
+  {{ estimate("Specificity: catches bad answers", result.specificity) }}
+  {{ estimate("Cohen's kappa: agreement beyond chance", result.kappa, percent=False) }}
+</div>
+<h2>Pass rate <span class="muted small">(test pile)</span></h2>
+<div class="grid">
+  {{ estimate("Judge says (uncorrected)", result.naive) }}
+  {{ estimate("Corrected: Rogan-Gladen", result.corrected) }}
+  {{ estimate("Corrected: PPI", result.ppi) }}
+</div>
+<p class="muted small">
+  Dev cases {{ result.dev_cases }} · calibration pairs {{ result.calibration_pairs }} ·
+  unresolved labels {{ result.unresolved_labels }} · test cases {{ result.test_cases }} ·
+  judge UNKNOWN {{ "%.1f"|format(result.naive.unknown_rate * 100) }}%
+</p>
+<ul class="muted small">{% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+{% endif %}
+{% endblock %}

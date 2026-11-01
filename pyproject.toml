@@ -55,6 +55,13 @@ Changelog = "https://github.com/evalhawk/evalhawk/blob/main/CHANGELOG.md"
 [project.scripts]
 evalhawk = "evalhawk.cli.main:app"
 
+[project.optional-dependencies]
+ui = [
+    "fastapi>=0.162",
+    "jinja2>=3.1.6",
+    "uvicorn>=0.54",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",
@@ -66,6 +73,10 @@ dev = [
     "pre-commit>=4.0",
     "import-linter>=2.15",
     "ppi-python>=0.2.3",
+    "fastapi>=0.162",
+    "uvicorn>=0.54",
+    "jinja2>=3.1.6",
+    "httpx2>=2.16",
 ]
 docs = [
     "zensical>=0.0.65",
