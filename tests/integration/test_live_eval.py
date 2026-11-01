@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from evalhawk.cli._shared import console
 from evalhawk.cli.main import app
 from evalhawk.config import load_config
 from evalhawk.core.errors import ConfigError
@@ -16,11 +17,17 @@ from evalhawk.core.models import Label, Outcome
 from evalhawk.storage.sqlite import SQLiteStore
 from evalhawk.testing.fake_llm import FakeLLMServer, chat_reply
 
-runner = CliRunner(env={"COLUMNS": "200"})  # wide enough that tables never wrap
+runner = CliRunner()
 JUDGE_URL_LINE = '\nbase_url = "http://localhost:11434/v1"'  # the setting line, not the comment
 QUICKSTART_CRITERIA = (
     'criteria = { not_empty = "code", concise = "code", no_personal_data = "code" }'
 )
+
+
+@pytest.fixture(autouse=True)
+def wide_console(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Rich fixes its width when the CLI module is imported; make tables never wrap."""
+    monkeypatch.setattr(console, "width", 200)
 
 
 @pytest.fixture
