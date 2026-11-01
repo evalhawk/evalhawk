@@ -143,6 +143,18 @@ the time.
 worse (or, with `--fail-on inconclusive`, not provably as good), **2** = error. A reusable
 GitHub Action is in `action.yml`; see `examples/ci/evalhawk-gate.yml`.
 
+### Discover new failure modes
+
+```bash
+uv run evalhawk discover --run v1                     # cluster why answers failed
+uv run evalhawk discover --run v1 --namer local       # let an LLM judge propose names
+```
+
+EvalHawk collects the judge's reasoning on FAIL verdicts and the notes you typed on FAIL
+labels, groups similar ones (TF-IDF + k-means, no extra dependencies), and prints each
+cluster's key words and examples. With `--namer`, an LLM judge proposes a name and a
+yes/no question per cluster; you decide which become new `[[criteria]]`.
+
 ### Built-in criteria and code checks
 
 | Built-in template | Needs | Code check | Options |

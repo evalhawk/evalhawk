@@ -263,6 +263,13 @@ class InMemoryStore:
             if run.target_version == target_version
         ]
 
+    def labels_for(self, trace_id: str) -> list[Label]:
+        return [
+            label.model_copy(deep=True)
+            for label in self.labels.values()
+            if label.trace_id == trace_id
+        ]
+
     def iter_traces(self, run_id: str) -> Iterator[Trace]:
         ordered = sorted(
             (t for t in self.traces.values() if t.run_id == run_id),

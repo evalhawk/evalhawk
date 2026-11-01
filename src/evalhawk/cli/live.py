@@ -442,11 +442,68 @@ def retrieval_command(
             console.print(f"{report.skipped} answers skipped: no relevant_ids or retrieved_ids.")
 
 
+NAMING_PROMPT = (
+    "These are reasons why answers from an AI assistant failed. They come from one cluster "
+    "of similar failures. Propose ONE failure mode they share.\n\n{examples}\n\n"
+    "Reply with exactly two lines:\n"
+    "NAME: a short snake_case name\n"
+    "QUESTION: one yes/no question that is answered 'yes' when an answer does NOT have "
+    "this failure"
+)
+
+
+def discover_command(
+    run: Annotated[str, typer.Option("--run")],
+    criterion: Annotated[str | None, typer.Option(help="Only this criterion's failures")] = None,
+    k: Annotated[int | None, typer.Option(help="Number of clusters (default ~sqrt(n/2))")] = None,
+    namer: Annotated[
+        str | None, typer.Option(help="An LLM judge from evalhawk.toml to propose names")
+    ] = None,
+    config: ConfigOption = Path("evalhawk.toml"),
+    db: DbOption = None,
+    seed: int = 0,
+) -> None:
+    """Cluster failure reasons (judge reasoning, human notes) into candidate criteria."""
+    from evalhawk.judges.prompt import PromptJudge
+    from evalhawk.services.discover import discover
+    from evalhawk.wiring import build_judge
+
+    with user_errors(), open_store(database(db, config)) as store:
+        execution = select_run(store, run)
+        clusters, texts = discover(store, execution, criterion=criterion, k=k, seed=seed)
+        judge = None
+        if namer is not None:
+            cfg = load_config(config)
+            if namer not in cfg.judges:
+                raise ConfigError(f"--namer {namer!r} is not a judge in {config}")
+            judge = build_judge(namer, cfg.judges[namer], base_dir=cfg.base_dir, others=cfg.judges)
+            if not isinstance(judge, PromptJudge):
+                raise ConfigError("--namer must be an LLM (openai_compatible) judge")
+        console.print(f"{len(texts)} failure reasons in {len(clusters)} clusters (largest first):")
+        for number, cluster in enumerate(clusters, 1):
+            terms = ", ".join(cluster.top_terms)
+            console.print(f"\n[{number}] {cluster.size} reasons; key words: {terms}")
+            for example in cluster.examples:
+                console.print(f"    - {example[:160]}")
+            if judge is not None:
+                examples = "\n".join(f"- {e}" for e in cluster.examples)
+                messages = [{"role": "user", "content": NAMING_PROMPT.format(examples=examples)}]
+                reply = asyncio.run(judge.complete(messages)).text
+                console.print("    Proposed criterion (review before adding to evalhawk.toml):")
+                for line in reply.strip().splitlines()[:2]:
+                    console.print(f"      {line.strip()}")
+        console.print(
+            "\nTurn a cluster into a criterion by adding it to evalhawk.toml, e.g.\n"
+            '  [[criteria]]\n  name = "..."\n  question = "Is the answer free of ...?"'
+        )
+
+
 judges_app.command("status")(status_command)
 judges_app.command("cascade")(cascade_command)
 judges_app.command("compare")(compare_judges_command)
 
 __all__ = [
+    "discover_command",
     "eval_command",
     "export_command",
     "init_command",
