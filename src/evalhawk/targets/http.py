@@ -77,6 +77,13 @@ class HttpTarget:
         jsonpath.validate(answer_path)
         if contexts_path:
             jsonpath.validate(contexts_path)
+        if isinstance(body, str):
+            # A JSON body written as a string ('{"message": "{{input}}"}'): parse it now, so
+            # placeholders are filled as JSON values and an object is sent, not a string.
+            try:
+                body = json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"body is not valid JSON: {exc}; or use a TOML table") from exc
         self.url = url
         self.body = body if body is not None else {"input": "{{input}}"}
         self.answer_path = answer_path

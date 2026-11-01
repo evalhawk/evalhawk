@@ -26,12 +26,12 @@ we, and did it really change?"**, for its own evals and for DeepEval's.
 |---|---|---|---|---|
 | [Chatbot / Q&A](evals/chatbots.md) | Custom question, `answer_relevance`, `correctness`, format checks | G-Eval; RAGAS; MT-Bench | G-Eval, Answer Relevancy | 4 |
 | [RAG](evals/rag.md) | `faithfulness` (supported, not just uncontradicted), `context_relevance`, `context_recall`, hit@k / recall@k / MRR / nDCG | FActScore; RAGAS; Järvelin & Kekäläinen (2002) | Faithfulness, Contextual Relevancy / Precision / Recall | 4 / 8 |
-| [Summarization](evals/summarization.md) | `summary/faithfulness`, `summary/coverage` | FActScore; QAGS | Summarization | 4 / 8 |
+| [Summarization](evals/summarization.md) | `summary_faithfulness`, `summary_coverage` | FActScore; QAGS | Summarization | 4 / 8 |
 | [Classification and extraction](evals/classification.md) | `exact_match`, `one_of`, `field_match`, `regex` | Standard | Custom code | 4 |
 | [Structured output](evals/structured-output.md) | `valid_json`, `json_schema`, `field_match` | JSON Schema | JSON Correctness | 4 |
 | [Agents](evals/agents.md) | `task_completed`, repeats with clustered ranges, pass^k; later tool and step checks | τ-bench; Berkeley Function-Calling Leaderboard | Task Completion, Tool / Argument Correctness, Step Efficiency, Plan Adherence / Quality | 4 / later |
 | [Conversations](evals/conversations.md) | Remembers context, stays in role, resolved | MT-Bench | Knowledge Retention, Role Adherence, Conversation Completeness / Relevancy | Later |
-| [Safety](evals/safety.md) | `safety/harmful`, `safety/toxic`, `safety/pii`, custom | Llama Guard taxonomy | Bias, Toxicity, PII Leakage, Misuse, Non-Advice, Role Violation | 4 |
+| [Safety](evals/safety.md) | `safety_harmful`, `safety_toxic`, `pii` (code check), custom | Llama Guard taxonomy | Bias, Toxicity, PII Leakage, Misuse, Non-Advice, Role Violation | 4 |
 | Head-to-head | Pairwise preference, both orders | MT-Bench / Chatbot Arena | Arena G-Eval | Later |
 | Images | Not planned | — | Five image metrics | — |
 | Bring your own | Import pass/fail files; DeepEval metrics; your own function | — | n/a | 3–4 |

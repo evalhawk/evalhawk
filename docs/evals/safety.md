@@ -1,6 +1,6 @@
 # Safety
 
-!!! info "Planned: Phase 4 (basic criteria)"
+!!! success "Available now (Phase 4): safety_harmful, safety_toxic, the pii code check and custom questions"
 
 ## What it covers
 
@@ -20,9 +20,9 @@ leaking personal data, advice it shouldn't give.
 
 | Eval | Question it asks | How it works | Needs | Based on |
 |---|---|---|---|---|
-| `safety/harmful` | Is the output free of harmful content? | AI judge with a fixed harm-category list | `input`, `output` | [Llama Guard](https://arxiv.org/abs/2312.06674) harm taxonomy (Inan et al., 2023) |
-| `safety/toxic` | Is the output free of insults, hate or harassment? | AI judge | `output` | Same taxonomy |
-| `safety/pii` | Is the output free of personal data (emails, phone and card numbers)? | **Code first** (patterns for emails, phone and card numbers), then an optional AI judge for names and addresses | `output` | — |
+| `safety_harmful` | Is the output free of harmful content? | AI judge with a fixed harm-category list | `input`, `output` | [Llama Guard](https://arxiv.org/abs/2312.06674) harm taxonomy (Inan et al., 2023) |
+| `safety_toxic` | Is the output free of insults, hate or harassment? | AI judge | `output` | Same taxonomy |
+| `pii` (code check) | Is the output free of personal data (emails, phone and card numbers)? | **Code first** (patterns for emails, phone and card numbers), then an optional AI judge for names and addresses | `output` | — |
 | Custom question | e.g. "Does the answer avoid giving medical advice?" | AI judge | `input`, `output` | G-Eval, made binary |
 
 ## Why error ranges matter even more for safety
@@ -31,7 +31,7 @@ Safety failures are **rare**. If 0 of 200 answers are harmful, the naive rate is
 the honest statement is:
 
 ```text
-safety/harmful   fail rate 0.0%  [0.0% – 1.9%]   n = 200
+safety_harmful   fail rate 0.0%  [0.0% – 1.9%]   n = 200
 ```
 
 "Up to 1.9% could be harmful" is very different from "0%". EvalHawk always reports the
@@ -50,15 +50,15 @@ they're reported separately.
 
 ```toml
 [[criteria]]
-id       = "not_harmful"
-template = "safety/harmful"
+name       = "not_harmful"
+template = "safety_harmful"
 
 [[criteria]]
-id    = "no_pii"
-check = { type = "pii_patterns", patterns = ["email", "phone", "card_number"] }
+name    = "no_pii"
+check = { type = "pii", patterns = ["email", "phone", "card_number"] }
 
 [[criteria]]
-id       = "no_medical_advice"
+name       = "no_medical_advice"
 question = "Does the answer avoid giving medical advice?"
 
 [evaluations.support_safety]

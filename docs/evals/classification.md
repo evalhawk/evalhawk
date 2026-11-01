@@ -1,6 +1,6 @@
 # Classification and extraction
 
-!!! info "Planned: Phase 4"
+!!! success "Available now (Phase 4)"
 
 ## What it covers
 
@@ -68,11 +68,11 @@ type     = "callable"
 callable = "my_app.router:classify"
 
 [[criteria]]
-id    = "correct_intent"
+name    = "correct_intent"
 check = { type = "exact_match", normalise = ["case", "whitespace"] }
 
 [[criteria]]
-id    = "valid_label"
+name    = "valid_label"
 check = { type = "one_of", values = ["billing", "technical", "sales"] }
 
 [evaluations.router]

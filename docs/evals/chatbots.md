@@ -1,6 +1,6 @@
 # Chatbots and Q&A
 
-!!! info "Planned: Phase 4"
+!!! success "Available now (Phase 4)"
 
 ## What it covers
 
@@ -27,7 +27,7 @@ Each failure you care about becomes **one criterion**.
 | `answer_relevance` (template) | Does the answer address what was asked? | AI judge, one yes/no verdict | `input`, `output` | [RAGAS](https://arxiv.org/abs/2309.15217) (Es et al., 2023) |
 | `correctness` (template) | Does the answer agree with the reference answer? | AI judge compares against the reference | `reference` | Reference-guided judging, [MT-Bench](https://arxiv.org/abs/2306.05685) (Zheng et al., 2023) |
 | Custom question | Anything you write, e.g. "Is the tone empathetic?" | AI judge, one yes/no verdict | `input`, `output` | [G-Eval](https://arxiv.org/abs/2303.16634) (Liu et al., 2023), made binary |
-| `max_words`, `contains`, `regex`, `language` (code) | Format and instruction rules | Code, no AI | `output` | — |
+| `max_words`, `contains`, `not_contains`, `regex` (code) | Format and instruction rules | Code, no AI | `output` | — |
 
 **Tips for custom questions:**
 
@@ -67,23 +67,23 @@ the answers, add an `"output"` field and use the `recorded` target.
 [target]
 type    = "http"
 url     = "https://bot.internal/api/chat"
-body    = '{"message": "{{input}}"}'
+body    = { message = "{{input}}" }
 answer_path = "$.reply"
 
 [[criteria]]
-id       = "answer_relevance"
+name       = "answer_relevance"
 template = "answer_relevance"
 
 [[criteria]]
-id       = "correctness"
+name       = "correctness"
 template = "correctness"
 
 [[criteria]]
-id       = "empathetic"
+name       = "empathetic"
 question = "If the customer sounds upset, does the answer acknowledge it?"
 
 [[criteria]]
-id    = "concise"
+name    = "concise"
 check = { type = "max_words", value = 150 }
 
 [evaluations.support]

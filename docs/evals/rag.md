@@ -1,6 +1,6 @@
 # RAG systems
 
-!!! info "Planned: Phase 4 (answer checks), Phase 8 (retrieval checks and published accuracy)"
+!!! success "Answer checks available now (Phase 4): faithfulness, context_relevance, context_recall. Retrieval metrics (hit@k, MRR, nDCG) and published accuracy: Phase 8"
 
 ## What it covers
 
@@ -78,17 +78,17 @@ Your system's response must include the retrieved documents. With an HTTP target
 [target]
 type          = "http"
 url           = "https://docs-bot.internal/ask"
-body          = '{"q": "{{input}}"}'
+body          = { q = "{{input}}" }
 answer_path   = "$.answer"
 contexts_path = "$.sources[*].text"
 
 [[criteria]]
-id       = "faithfulness"
-template = "rag/faithfulness"
+name       = "faithfulness"
+template = "faithfulness"
 
 [[criteria]]
-id       = "context_relevance"
-template = "rag/context_relevance"
+name       = "context_relevance"
+template = "context_relevance"
 
 [evaluations.docs_bot]
 dataset  = "data/docs_questions.jsonl"

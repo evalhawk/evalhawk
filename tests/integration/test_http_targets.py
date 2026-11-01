@@ -48,3 +48,13 @@ def test_openai_compatible_target(llm_server: FakeLLMServer) -> None:
     sent = llm_server.requests[0]
     assert sent["messages"][0] == {"role": "system", "content": "You are a support agent."}
     assert sent["messages"][1] == {"role": "user", "content": "refund policy?"}
+
+
+def test_string_body_is_parsed_as_a_json_template(llm_server: FakeLLMServer) -> None:
+    llm_server.respond = lambda payload: (200, {"reply": payload["message"]})
+    target = HttpTarget(url=llm_server.url, body='{"message": "{{input}}"}', answer_path="$.reply")
+    out = asyncio.run(target(Example(input='He said "hi"')))
+    assert llm_server.requests[0] == {"message": 'He said "hi"'}  # an object, quotes intact
+    assert out.output == 'He said "hi"'
+    with pytest.raises(ValueError, match="not valid JSON"):
+        HttpTarget(url=llm_server.url, body="{not json")

@@ -1,6 +1,6 @@
 # Structured output
 
-!!! info "Planned: Phase 4"
+!!! success "Available now (Phase 4)"
 
 ## What it covers
 
@@ -51,15 +51,15 @@ Plus a schema file, e.g. `schemas/invoice.json`.
 
 ```toml
 [[criteria]]
-id    = "valid_json"
+name    = "valid_json"
 check = { type = "valid_json" }
 
 [[criteria]]
-id    = "matches_schema"
+name    = "matches_schema"
 check = { type = "json_schema", schema = "schemas/invoice.json" }
 
 [[criteria]]
-id    = "total_correct"
+name    = "total_correct"
 check = { type = "field_match", field = "total" }
 
 [evaluations.invoices]

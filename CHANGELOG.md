@@ -10,6 +10,11 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Live evaluation (Phase 4): `evalhawk init`, `eval`, `judges status`, `judges compare` and
+  `export`; `evalhawk.toml` config; OpenAI-compatible, function and code-check judges
+  (13 checks); 11 built-in criteria; callable, HTTP, OpenAI-compatible and recorded
+  targets; an async runner with resume, judgment-key cache, retries, timeouts and budget;
+  `evalhawk.testing.fake_llm` for offline tests. See ADR-0013 (Proposed).
 - Offline services and CLI: synthetic `demo init`, recorded JSONL/CSV `import`,
   representative-case `report`, paired judge-proxy `compare`, split/read `audit`,
   latest-label majority adjudication, run manifests and explicit run selection.
@@ -22,7 +27,7 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
   split diagnostics and offline fakes. ADR-0010 is Proposed pending maintainer review.
 - Coverage simulations (card S7): fixed-seed slow tests for naive, Rogan–Gladen, PPI,
   and clustered intervals, plus a standalone theta-grid coverage plotting script.
-- Cluster-robust standard errors, clustered bootstrap options and `required_n_paired()` for sample-size planning (card S6). 
+- Cluster-robust standard errors, clustered bootstrap options and `required_n_paired()` for sample-size planning (card S6).
 - Prediction-powered inference for mean estimation (card S5): `ppi_mean()` with unbiased
   point estimate and confidence interval.
 - Version comparison (card S4): `mcnemar_exact()`, `paired_bootstrap()`, `decide()` and the `Comparison` result object.
@@ -44,5 +49,8 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Changed
 
+- **Breaking (pre-1.0):** `Judge.judge()` now receives the example: `judge(example, trace, criterion)`.
+- Schema migration 3 adds the `judgments` cache table.
+- `report`, `compare` accept `--criterion` / `--judge` for multi-criterion runs.
 - `normalize_text()` also applies Unicode NFC; `content_id()` itself is unchanged.
 - SciPy is no longer a runtime dependency (ADR-0009).

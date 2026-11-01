@@ -1,6 +1,6 @@
 # Summarization
 
-!!! info "Planned: Phase 4 (as criteria), Phase 8 (coverage check)"
+!!! success "Available now (Phase 4): summary_faithfulness and summary_coverage as LLM-judged templates"
 
 ## What it covers
 
@@ -19,9 +19,9 @@ document abstracts, email digests.
 
 | Eval | Question it asks | How it works | Needs | Based on |
 |---|---|---|---|---|
-| `summary/faithfulness` | Is every statement in the summary supported by the source? | Split the summary into claims; check each against the source; PASS if all are supported | `input` (the source), `output` | [FActScore](https://arxiv.org/abs/2305.14251) (Min et al., 2023) |
-| `summary/coverage` | Does the summary include the key points? | 1. The judge writes yes/no questions from the **source**. 2. It answers them from the **summary**. PASS if enough are answerable (your threshold) | `input`, `output` | [QAGS](https://arxiv.org/abs/2004.04228) (Wang et al., 2020) |
-| `max_words`, `bullet_count`, `regex` (code) | Length and format rules | Code, no AI | `output` | — |
+| `summary_faithfulness` | Is every statement in the summary supported by the source? | Split the summary into claims; check each against the source; PASS if all are supported | `input` (the source), `output` | [FActScore](https://arxiv.org/abs/2305.14251) (Min et al., 2023) |
+| `summary_coverage` | Does the summary include the key points? | 1. The judge writes yes/no questions from the **source**. 2. It answers them from the **summary**. PASS if enough are answerable (your threshold) | `input`, `output` | [QAGS](https://arxiv.org/abs/2004.04228) (Wang et al., 2020) |
+| `max_words`, `max_chars`, `regex` (code) | Length and format rules | Code, no AI | `output` | — |
 
 Faithfulness and coverage pull in opposite directions: a one-line summary is faithful but
 misses a lot. Always use **both**.
@@ -52,15 +52,15 @@ type     = "callable"
 callable = "my_app.summaries:summarize"
 
 [[criteria]]
-id       = "faithful"
-template = "summary/faithfulness"
+name       = "faithful"
+template = "summary_faithfulness"
 
 [[criteria]]
-id       = "covers_key_points"
-template = "summary/coverage"
+name       = "covers_key_points"
+template = "summary_coverage"
 
 [[criteria]]
-id    = "short"
+name    = "short"
 check = { type = "max_words", value = 120 }
 
 [evaluations.ticket_summaries]
