@@ -339,6 +339,13 @@ class SQLiteStore:
             if (run := Run.model_validate_json(payload)).target_version == target_version
         ]
 
+    def labels_for(self, trace_id: str) -> list[Label]:
+        """Every human label on one trace, in insertion order (history kept)."""
+        rows = self._connection.execute(
+            "SELECT record FROM labels WHERE trace_id=? ORDER BY rowid", (trace_id,)
+        ).fetchall()
+        return [Label.model_validate_json(row[0]) for row in rows]
+
     def iter_traces(self, run_id: str) -> Iterator[Trace]:
         """Every trace of a run, ordered by example and repeat."""
         rows = self._connection.execute(

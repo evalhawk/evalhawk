@@ -10,6 +10,9 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ### Added
 
+- Failure discovery (Phase 9): `evalhawk discover` clusters judge reasoning and human notes
+  on failures (TF-IDF + k-means in NumPy, no new dependencies) and can ask an LLM judge to
+  propose a criterion per cluster; `Store.labels_for()`.
 - RAG retrieval metrics (Phase 8): `stats.retrieval` (hit@k, recall@k, precision@k, MRR,
   nDCG@k with cluster-bootstrap intervals), optional `Example.relevant_ids` and
   `TargetOutput.retrieved_ids` (not part of IDs), `retrieved_ids_path` on HTTP targets,
