@@ -2,6 +2,7 @@
 
 import asyncio
 import csv
+import getpass
 import json
 from pathlib import Path
 from typing import Annotated
@@ -311,7 +312,37 @@ def export_command(
         console.print(f"Exported {len(rows)} answers to {out} (test-pile read logged as 'export').")
 
 
+def ui_command(
+    config: ConfigOption = Path("evalhawk.toml"),
+    db: DbOption = None,
+    annotator: Annotated[
+        str | None, typer.Option(help="Your name on saved labels (default: your login)")
+    ] = None,
+    host: Annotated[str, typer.Option(help="Interface to bind; keep 127.0.0.1")] = "127.0.0.1",
+    port: int = 8765,
+    seed: int = 0,
+) -> None:
+    """Open the local web app: runs, blind labelling and judge report cards."""
+    with user_errors():
+        try:
+            import uvicorn
+
+            from evalhawk.ui.app import create_app
+        except ImportError as exc:
+            raise ConfigError(
+                f'the web UI needs the [ui] extra: pip install "evalhawk[ui]" ({exc.name} missing)'
+            ) from exc
+        name = annotator or getpass.getuser()
+        path = database(db, config)
+        if host not in {"127.0.0.1", "localhost", "::1"}:
+            console.print(f"Warning: binding to {host} exposes your labels to the network.")
+        console.print(f"EvalHawk UI: http://{host}:{port}  (labelling as {name}; Ctrl+C to stop)")
+        uvicorn.run(
+            create_app(path, annotator=name, seed=seed), host=host, port=port, log_level="warning"
+        )
+
+
 judges_app.command("status")(status_command)
 judges_app.command("compare")(compare_judges_command)
 
-__all__ = ["eval_command", "export_command", "init_command", "judges_app"]
+__all__ = ["eval_command", "export_command", "init_command", "judges_app", "ui_command"]

@@ -75,6 +75,19 @@ and, for hosted APIs, `api_key_env` (the key is read from the environment, never
    FAIL answers per LLM criterion (the labelling UI), then run
    `evalhawk report --run v1 --criterion correctness`.
 
+### Label in the browser
+
+```bash
+uv sync --extra ui          # or: pip install "evalhawk[ui]"
+uv run evalhawk ui          # opens http://127.0.0.1:8765
+```
+
+The dashboard lists runs; each run shows every criterion's judged pass rate and whether its
+judge is calibrated. **Label** opens one answer at a time: read it, press **P** (pass),
+**F** (fail) or **U** (unsure), optionally add a note, and the next answer appears. The
+judge's verdict is never shown, so it can't sway you. After about 10 PASS and 10 FAIL
+labels, **Report** shows the judge's report card and the corrected pass rates.
+
 ### Built-in criteria and code checks
 
 | Built-in template | Needs | Code check | Options |

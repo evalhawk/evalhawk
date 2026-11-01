@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Label {{ criterion_name }} · EvalHawk{% endblock %}
+{% block content %}
+<p class="small"><a href="/runs/{{ run.id }}">← {{ run.target_version }}</a></p>
+<div id="item">{% include "_item.html" %}</div>
+<script>
+  // Keyboard shortcuts: P = PASS, F = FAIL, U = UNKNOWN (ignored while typing a note).
+  document.addEventListener("keyup", function (event) {
+    if (event.target.closest("textarea, input")) return;
+    var key = event.key.toLowerCase();
+    var map = { p: "PASS", f: "FAIL", u: "UNKNOWN" };
+    if (!map[key]) return;
+    var button = document.querySelector('button[name="outcome"][value="' + map[key] + '"]');
+    if (button) button.click();
+  });
+</script>
+{% endblock %}

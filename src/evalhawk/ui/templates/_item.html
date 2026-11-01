@@ -1,0 +1,46 @@
+{# One answer to label. Blind by design: no judge verdict, reasoning or version is shown. #}
+{% set done = state.labelled %}{% set total = state.total %}
+<div class="small muted">{{ done }} of {{ total }} dev answers labelled for <strong>{{ criterion_name }}</strong></div>
+<div class="bar"><span style="width: {{ (100 * done / total) if total else 0 }}%"></span></div>
+{% if state.item %}
+{% set item = state.item %}
+<div class="card">
+  <div class="label">Question to decide</div>
+  <div class="question">{{ item.criterion.question }}</div>
+</div>
+<div class="card">
+  <div class="label">Input</div>
+  <pre>{{ item.input | pretty }}</pre>
+</div>
+{% if item.reference is not none %}
+<div class="card">
+  <div class="label">Reference answer</div>
+  <pre>{{ item.reference | pretty }}</pre>
+</div>
+{% endif %}
+{% if item.contexts is not none %}
+<div class="card">
+  <div class="label">Retrieved context</div>
+  {% for text in item.contexts %}<pre>[{{ loop.index }}] {{ text }}</pre>{% if not loop.last %}<hr>{% endif %}{% endfor %}
+</div>
+{% endif %}
+<div class="card">
+  <div class="label">Answer to evaluate</div>
+  <pre>{{ item.output }}</pre>
+</div>
+<form hx-post="/label/{{ run.id }}/{{ criterion_name }}" hx-target="#item" hx-swap="innerHTML"
+      method="post" action="/label/{{ run.id }}/{{ criterion_name }}">
+  <input type="hidden" name="trace_id" value="{{ item.trace_id }}">
+  <textarea name="note" placeholder="Optional note: why? (helps find failure patterns later)"></textarea>
+  <div class="buttons">
+    <button class="pass" type="submit" name="outcome" value="PASS">PASS<kbd>P</kbd></button>
+    <button class="fail" type="submit" name="outcome" value="FAIL">FAIL<kbd>F</kbd></button>
+    <button class="unknown" type="submit" name="outcome" value="UNKNOWN">Unsure<kbd>U</kbd></button>
+  </div>
+</form>
+{% else %}
+<div class="card">
+  <div class="question">All {{ total }} dev answers are labelled. 🎉</div>
+  <p><a href="/report/{{ run.id }}/{{ criterion_name }}">See the report →</a></p>
+</div>
+{% endif %}

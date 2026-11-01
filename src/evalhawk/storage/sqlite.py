@@ -339,6 +339,12 @@ class SQLiteStore:
             if (run := Run.model_validate_json(payload)).target_version == target_version
         ]
 
+    def list_runs(self) -> list[Run]:
+        """Every run, newest first."""
+        rows = self._connection.execute("SELECT record FROM runs").fetchall()
+        runs = [Run.model_validate_json(row[0]) for row in rows]
+        return sorted(runs, key=lambda run: run.created_at, reverse=True)
+
     def test_reads(self, split_set_id: str) -> list[tuple[str, str]]:
         """Return purpose and UTC timestamp for every audited test read."""
         return list(

@@ -263,6 +263,13 @@ class InMemoryStore:
             if run.target_version == target_version
         ]
 
+    def list_runs(self) -> list[Run]:
+        return sorted(
+            (run.model_copy(deep=True) for run in self.runs.values()),
+            key=lambda run: run.created_at,
+            reverse=True,
+        )
+
     def test_reads(self, split_set_id: str) -> list[tuple[str, str]]:
         """The fake has deterministic timestamps rather than a real clock."""
         return [

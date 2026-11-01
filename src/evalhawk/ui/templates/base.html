@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EvalHawk{% endblock %}</title>
+  <script src="/static/htmx.min.js"></script>
+  <style>
+    :root {
+      --bg: #fafaf9; --panel: #ffffff; --text: #1c1917; --muted: #6b6560; --line: #e7e5e4;
+      --accent: #2563eb; --pass: #15803d; --fail: #b91c1c; --unknown: #a16207;
+      --pass-bg: #dcfce7; --fail-bg: #fee2e2; --unknown-bg: #fef3c7;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161514; --panel: #1f1e1c; --text: #f5f5f4; --muted: #a8a29e; --line: #34312e;
+        --accent: #60a5fa; --pass: #4ade80; --fail: #f87171; --unknown: #fbbf24;
+        --pass-bg: #14301f; --fail-bg: #3a1717; --unknown-bg: #3a2e0d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+           font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: center;
+             padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
+    header a { color: var(--text); text-decoration: none; font-weight: 700; }
+    main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 1.4rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin: 24px 0 8px; }
+    .muted { color: var(--muted); } .small { font-size: 0.85rem; }
+    a { color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; background: var(--panel);
+            border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line);
+             vertical-align: top; }
+    th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+            padding: 16px 18px; margin: 12px 0; }
+    .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .05em;
+             color: var(--muted); margin-bottom: 4px; }
+    pre { white-space: pre-wrap; word-wrap: break-word; margin: 0;
+          font: 0.95rem/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; }
+    .question { font-size: 1.15rem; font-weight: 600; }
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    button { font: inherit; padding: 10px 18px; border-radius: 8px; cursor: pointer;
+             border: 1px solid var(--line); background: var(--panel); color: var(--text); }
+    button.pass { background: var(--pass-bg); color: var(--pass); border-color: var(--pass); }
+    button.fail { background: var(--fail-bg); color: var(--fail); border-color: var(--fail); }
+    button.unknown { background: var(--unknown-bg); color: var(--unknown); border-color: var(--unknown); }
+    kbd { font: 0.75rem ui-monospace, monospace; border: 1px solid currentColor;
+          border-radius: 4px; padding: 0 4px; margin-left: 6px; opacity: .8; }
+    textarea { width: 100%; font: inherit; padding: 8px; border-radius: 8px; min-height: 60px;
+               border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+    .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: var(--accent); }
+    .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.8rem; }
+    .ok { background: var(--pass-bg); color: var(--pass); }
+    .insufficient { background: var(--unknown-bg); color: var(--unknown); }
+    .exact { background: var(--line); color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .big { font-size: 1.6rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">EvalHawk</a>
+    <span class="muted small">labelling as <strong>{{ annotator }}</strong></span>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>
