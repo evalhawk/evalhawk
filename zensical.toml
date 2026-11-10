@@ -62,6 +62,7 @@ nav = [
     { "Engineering standards" = "development/standards.md" },
     { "Dev log" = [
       { "Overview" = "devlog/index.md" },
+      { "Live check with Ollama" = "devlog/2026-11-10-ollama-live-check.md" },
       { "Phases 5-10 From library to product" = "devlog/2026-11-01-phases5-10-product.md" },
       { "Phase 4 Live judging" = "devlog/2026-11-01-phase4-live-judging.md" },
       { "D2-D7 Data backbone" = "devlog/2026-10-11-D2-D7-data-backbone.md" },

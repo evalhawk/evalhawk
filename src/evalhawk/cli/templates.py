@@ -51,6 +51,8 @@ type = "openai_compatible"
 base_url = "http://localhost:11434/v1"
 model = "qwen3:8b"
 mode = "reason_then_verdict"
+reasoning_effort = "none"            # qwen3 models think first; this is faster and avoids
+                                     # replies cut off before the verdict
 # For a hosted model: base_url = "https://api.openai.com/v1", model = "...",
 # api_key_env = "OPENAI_API_KEY" (the key is read from the environment, never this file)
 

@@ -12,7 +12,7 @@ from typing import ClassVar, Literal
 
 from evalhawk.core.ids import content_id, normalize_text
 from evalhawk.core.models import Criterion, Example, Outcome, Trace, Verdict
-from evalhawk.judges.criteria import BUILTIN_CRITERIA
+from evalhawk.judges.criteria import BUILTIN_CRITERIA, BuiltinCriterion
 from evalhawk.judges.parsing import parse_verdict
 
 Mode = Literal["reason_then_verdict", "verdict_only"]
@@ -25,7 +25,8 @@ SYSTEM_PROMPT = (
 
 _INSTRUCTIONS: dict[str, str] = {
     "reason_then_verdict": (
-        "Explain your reasoning briefly, then end with one final line that is exactly "
+        "Explain your reasoning in at most three sentences, then end with one final line "
+        "that is exactly "
         "'VERDICT: PASS', 'VERDICT: FAIL' or 'VERDICT: UNKNOWN'. PASS means the answer to "
         "the question above is yes. Use UNKNOWN only if the material is insufficient to decide."
     ),
@@ -35,7 +36,7 @@ _INSTRUCTIONS: dict[str, str] = {
     ),
 }
 
-TEMPLATE_VERSION = "prompt-v1"
+TEMPLATE_VERSION = "prompt-v2"  # v2: reference only when needed; guidance by question
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,12 +47,36 @@ class Completion:
     probability: float | None = None
     cost_usd: float = 0.0
     latency_ms: float = 0.0
+    truncated: bool = False
+    """The model stopped at its token limit (the reply may lack its verdict line)."""
 
 
 def _as_text(value: object) -> str:
     if isinstance(value, str):
         return value
     return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+def builtin_for(criterion: Criterion) -> BuiltinCriterion | None:
+    """The built-in this criterion uses: same name, or the same question (a renamed template)."""
+    if criterion.name in BUILTIN_CRITERIA:
+        return BUILTIN_CRITERIA[criterion.name]
+    question = normalize_text(criterion.question)
+    return next(
+        (b for b in BUILTIN_CRITERIA.values() if normalize_text(b.question) == question), None
+    )
+
+
+def uses_reference(criterion: Criterion) -> bool:
+    """Show the reference answer only when the criterion needs it.
+
+    A reference shown for an unrelated question ("Is the answer polite?") makes judges,
+    small ones especially, grade agreement with the reference instead of the question.
+    """
+    builtin = builtin_for(criterion)
+    if builtin is not None:
+        return builtin.needs_reference
+    return "reference" in criterion.question.lower()
 
 
 def render_messages(
@@ -66,11 +91,13 @@ def render_messages(
     rules = (
         guidance if guidance is not None else {k: v.guidance for k, v in BUILTIN_CRITERIA.items()}
     )
+    builtin = builtin_for(criterion)
+    key = criterion.name if criterion.name in rules else builtin.name if builtin else None
     parts = [f"## Question to decide\n{criterion.question}"]
-    if criterion.name in rules:
-        parts.append(f"## How to judge\n{rules[criterion.name]}")
+    if key is not None and key in rules:
+        parts.append(f"## How to judge\n{rules[key]}")
     parts.append(f"## Input given to the assistant\n{_as_text(example.input)}")
-    if example.reference is not None:
+    if example.reference is not None and uses_reference(criterion):
         parts.append(f"## Reference answer\n{_as_text(example.reference)}")
     if trace.contexts is not None:
         numbered = "\n\n".join(f"[{i}] {text}" for i, text in enumerate(trace.contexts, 1))
@@ -139,7 +166,12 @@ class PromptJudge:
             example, trace, criterion, mode=self.mode, guidance=self.guidance
         )
         completion = await self.complete(messages)
-        outcome, reasoning, _ = parse_verdict(completion.text)
+        outcome, reasoning, parsed = parse_verdict(completion.text)
+        if not parsed and completion.truncated:
+            reasoning = (
+                "The reply was cut off at the token limit before its VERDICT line; raise "
+                f"max_tokens. Reply so far: {' '.join(completion.text.split())[-200:]!r}"
+            )
         probability = completion.probability if outcome is not Outcome.UNKNOWN else None
         return Verdict(
             trace_id=trace.id,
