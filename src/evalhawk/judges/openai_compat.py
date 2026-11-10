@@ -11,8 +11,9 @@ import time
 from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
-from evalhawk.core.errors import CallError, ConfigError
+from evalhawk.core.errors import ConfigError
 from evalhawk.judges.prompt import Completion, Mode, PromptJudge
+from evalhawk.transport.chat import check_reasoning_effort, reply_text
 from evalhawk.transport.http import request_json
 
 
@@ -68,17 +69,17 @@ class OpenAICompatibleJudge(PromptJudge):
         price_per_1k_input: float = 0.0,
         price_per_1k_output: float = 0.0,
         guidance: Mapping[str, str] | None = None,
+        reasoning_effort: str | None = None,
     ) -> None:
-        super().__init__(
-            model=model,
-            mode=mode,
-            params={
-                "base_url": base_url.rstrip("/"),
-                "temperature": float(temperature),
-                "max_tokens": int(max_tokens),
-            },
-            guidance=guidance,
-        )
+        params: dict[str, object] = {
+            "base_url": base_url.rstrip("/"),
+            "temperature": float(temperature),
+            "max_tokens": int(max_tokens),
+        }
+        if reasoning_effort is not None:  # only when set, so existing judge IDs never change
+            params["reasoning_effort"] = check_reasoning_effort(reasoning_effort)
+        super().__init__(model=model, mode=mode, params=params, guidance=guidance)
+        self.reasoning_effort = reasoning_effort
         self.base_url = base_url.rstrip("/")
         self.api_key_env = api_key_env
         self.headers = dict(headers or {})
@@ -107,6 +108,8 @@ class OpenAICompatibleJudge(PromptJudge):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
+        if self.reasoning_effort is not None:
+            payload["reasoning_effort"] = self.reasoning_effort
         if self.mode == "verdict_only":
             payload.update(logprobs=True, top_logprobs=5, max_tokens=min(self.max_tokens, 5))
         return payload
@@ -123,11 +126,8 @@ class OpenAICompatibleJudge(PromptJudge):
             verify=self.verify,
         )
         latency = (time.perf_counter() - start) * 1000
-        try:
-            choice = data["choices"][0]  # type: ignore[index]
-            text = str(choice["message"]["content"] or "")
-        except (KeyError, IndexError, TypeError) as exc:
-            raise CallError(f"{self.base_url}: unexpected chat response shape: {exc}") from exc
+        limit = min(self.max_tokens, 5) if self.mode == "verdict_only" else self.max_tokens
+        choice, text = reply_text(data, base_url=self.base_url, max_tokens=limit)
         probability = None
         logprobs = choice.get("logprobs") if isinstance(choice, dict) else None
         if self.mode == "verdict_only" and isinstance(logprobs, dict):
@@ -141,4 +141,10 @@ class OpenAICompatibleJudge(PromptJudge):
                 float(usage.get("prompt_tokens", 0)) * self.prices[0]
                 + float(usage.get("completion_tokens", 0)) * self.prices[1]
             ) / 1000
-        return Completion(text=text, probability=probability, cost_usd=cost, latency_ms=latency)
+        return Completion(
+            text=text,
+            probability=probability,
+            cost_usd=cost,
+            latency_ms=latency,
+            truncated=choice.get("finish_reason") == "length",
+        )

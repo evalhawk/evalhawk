@@ -351,7 +351,7 @@ def cascade_command(
     config: ConfigOption = Path("evalhawk.toml"),
     db: DbOption = None,
 ) -> None:
-    """Choose a cheap→strong cascade threshold on dev labels (cost vs accuracy)."""
+    """Choose a cheap-then-strong cascade threshold on dev labels (cost vs accuracy)."""
     from evalhawk.services.cascade import analyse_cascade
 
     with user_errors(), open_store(database(db, config)) as store:
@@ -403,8 +403,10 @@ def cascade_command(
             )
         else:
             console.print(
-                f'Add to evalhawk.toml:  [judges.cascade]  type = "cascade"  cheap = "{cheap}"'
-                f'  strong = "{strong}"  threshold = {curve.chosen.threshold:.3f}'
+                'Add to evalhawk.toml:\n\n[judges.cascade]\ntype = "cascade"\n'
+                f'cheap = "{cheap}"\nstrong = "{strong}"\n'
+                f"threshold = {curve.chosen.threshold:.3f}\n",
+                soft_wrap=True,
             )
             console.print("Chosen on dev: confirm it on test before trusting the cost saving.")
 

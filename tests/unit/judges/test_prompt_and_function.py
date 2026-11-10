@@ -26,13 +26,43 @@ def test_prompt_contains_everything_the_judge_needs() -> None:
         criterion.question,
         "SUPPORTED by the context",  # the built-in guidance
         "What's your refund policy?",
-        "Refunds within 30 days.",  # reference
         "[1] Refunds are available within 30 days.",  # numbered context
         "back to your card",  # the answer
         "VERDICT: PASS",  # reply instructions
     ):
         assert expected in text
     assert text.index("## Answer to evaluate") > text.index("## Retrieved context")
+    assert "## Reference answer" not in text  # faithfulness is judged against the context
+
+
+def test_reference_is_shown_only_to_criteria_that_need_it() -> None:
+    def shown(criterion: Criterion) -> bool:
+        return "## Reference answer" in render_messages(EXAMPLE, TRACE, criterion)[1]["content"]
+
+    assert shown(builtin_criterion("correctness").criterion())
+    polite = Criterion(name="polite", question="Is the answer polite and professional?")
+    assert not shown(polite)  # a reference here makes judges grade correctness instead
+    assert shown(Criterion(name="same", question="Does the answer agree with the reference?"))
+
+
+def test_a_renamed_built_in_keeps_its_guidance_and_reference() -> None:
+    renamed = Criterion(name="accurate", question=builtin_criterion("correctness").question)
+    text = render_messages(EXAMPLE, TRACE, renamed)[1]["content"]
+    assert "## How to judge" in text
+    assert "## Reference answer" in text
+
+
+def test_a_reply_cut_off_before_its_verdict_says_so() -> None:
+    class CutOff(PromptJudge):
+        async def complete(self, messages: list[dict[str, str]]) -> Completion:
+            return Completion(text="Let me think about this at great length", truncated=True)
+
+    verdict = asyncio.run(
+        CutOff(model="m").judge(EXAMPLE, TRACE, Criterion(name="c", question="q?"))
+    )
+    assert verdict.outcome is Outcome.UNKNOWN
+    assert verdict.reasoning is not None
+    assert "cut off at the token limit" in verdict.reasoning
 
 
 def test_custom_criterion_has_no_guidance_section_and_json_input_is_readable() -> None:

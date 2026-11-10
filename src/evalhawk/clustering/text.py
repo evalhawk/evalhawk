@@ -77,6 +77,21 @@ STOPWORDS = frozenset(
         "claims",
         "user",
         "question",
+        # words LLM judges use in almost every explanation
+        "reference",
+        "assistant",
+        "assistant's",
+        "evaluated",
+        "evaluate",
+        "states",
+        "stated",
+        "statement",
+        "statements",
+        "whereas",
+        "while",
+        "explicitly",
+        "provides",
+        "provided",
     ]
 )
 

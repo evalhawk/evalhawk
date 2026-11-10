@@ -6,8 +6,9 @@ import os
 import time
 from collections.abc import Mapping
 
-from evalhawk.core.errors import CallError, ConfigError
+from evalhawk.core.errors import ConfigError
 from evalhawk.core.models import Example, TargetOutput
+from evalhawk.transport.chat import check_reasoning_effort, reply_text
 from evalhawk.transport.http import request_json
 
 
@@ -26,7 +27,9 @@ class OpenAICompatibleTarget:
         max_tokens: int = 1024,
         timeout: float = 120.0,
         verify: bool | str = True,
+        reasoning_effort: str | None = None,
     ) -> None:
+        self.reasoning_effort = check_reasoning_effort(reasoning_effort)
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.system_prompt = system_prompt
@@ -55,26 +58,26 @@ class OpenAICompatibleTarget:
         messages = [{"role": "user", "content": user}]
         if self.system_prompt:
             messages.insert(0, {"role": "system", "content": self.system_prompt})
+        payload: dict[str, object] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        if self.reasoning_effort is not None:
+            payload["reasoning_effort"] = self.reasoning_effort
         start = time.perf_counter()
         data = await asyncio.to_thread(
             request_json,
             "POST",
             f"{self.base_url}/chat/completions",
-            {
-                "model": self.model,
-                "messages": messages,
-                "temperature": self.temperature,
-                "max_tokens": self.max_tokens,
-            },
+            payload,
             headers=self._headers(),
             timeout=self.timeout,
             verify=self.verify,
         )
         latency = (time.perf_counter() - start) * 1000
-        try:
-            text = str(data["choices"][0]["message"]["content"] or "")  # type: ignore[index]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise CallError(f"{self.base_url}: unexpected chat response shape: {exc}") from exc
+        _, text = reply_text(data, base_url=self.base_url, max_tokens=self.max_tokens)
         usage = data.get("usage") if isinstance(data, dict) else None
         return TargetOutput(
             output=text,

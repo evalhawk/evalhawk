@@ -62,6 +62,33 @@ one: install [Ollama](https://ollama.com), run `ollama pull qwen3:8b`, then swit
 version that includes them. Any OpenAI-compatible endpoint works: set `base_url`, `model`
 and, for hosted APIs, `api_key_env` (the key is read from the environment, never stored).
 
+### Local judges with Ollama: switch "thinking" off
+
+Many local models (Qwen 3 and 3.5, DeepSeek-R1, and others) **think** before they answer, and
+the thinking counts against `max_tokens`. A judge can then spend its whole budget thinking and
+return an empty reply. Turn thinking off on the judge:
+
+```toml
+[judges.local]
+type = "openai_compatible"
+base_url = "http://localhost:11434/v1"
+model = "qwen3:8b"
+mode = "reason_then_verdict"
+reasoning_effort = "none"   # also "low", "medium", "high"; omit for providers without it
+```
+
+On a laptop this made `qwen3.5:4b` about 14 times cheaper per judgment (26 tokens instead of
+362 on a one-line question). If a reply is still cut off, EvalHawk says so (`the model hit
+max_tokens ... spent all of it thinking`) instead of reporting an unreadable verdict; raise
+`max_tokens`. `reasoning_effort` also works on `[target]` when the app under test is a model.
+
+To check everything end to end with your own Ollama model (judging, calibration, correction,
+comparison, the gate and a cascade), run:
+
+```bash
+uv run python experiments/scripts/ollama_live_check.py --out ollama-check --model qwen3.5:4b
+```
+
 ### What `eval` does
 
 1. Validates the config and the data **before any call**: unknown judges, RAG checks on a

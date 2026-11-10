@@ -94,3 +94,34 @@ def test_malformed_response_is_a_clear_error(llm_server: FakeLLMServer) -> None:
     judge = OpenAICompatibleJudge(base_url=llm_server.url, model="m")
     with pytest.raises(CallError, match="unexpected chat response shape"):
         asyncio.run(judge.judge(EXAMPLE, TRACE, CRITERION))
+
+
+def test_reasoning_effort_is_sent_and_only_then_changes_the_judge_id(
+    llm_server: FakeLLMServer,
+) -> None:
+    llm_server.respond = lambda _p: (200, chat_reply("VERDICT: PASS"))
+    plain = OpenAICompatibleJudge(base_url=llm_server.url, model="m")
+    quiet = OpenAICompatibleJudge(base_url=llm_server.url, model="m", reasoning_effort="none")
+    asyncio.run(quiet.judge(EXAMPLE, TRACE, CRITERION))
+    assert llm_server.requests[0]["reasoning_effort"] == "none"
+    asyncio.run(plain.judge(EXAMPLE, TRACE, CRITERION))
+    assert "reasoning_effort" not in llm_server.requests[1]
+    assert plain.judge_id != quiet.judge_id
+    assert plain.judge_id == OpenAICompatibleJudge(base_url=llm_server.url, model="m").judge_id
+    with pytest.raises(ValueError, match="reasoning_effort"):
+        OpenAICompatibleJudge(base_url=llm_server.url, model="m", reasoning_effort="very high")
+
+
+def test_a_thinking_model_that_runs_out_of_tokens_gets_a_clear_error(
+    llm_server: FakeLLMServer,
+) -> None:
+    body = chat_reply("")
+    body["choices"][0]["finish_reason"] = "length"
+    body["choices"][0]["message"]["reasoning"] = "Thinking Process: 1. Analyze..."
+    llm_server.respond = lambda _p: (200, body)
+    judge = OpenAICompatibleJudge(base_url=llm_server.url, model="qwen3.5:4b")
+    with pytest.raises(
+        CallError, match='spent all of it thinking.*reasoning_effort = "none"'
+    ) as err:
+        asyncio.run(judge.judge(EXAMPLE, TRACE, CRITERION))
+    assert not err.value.retryable

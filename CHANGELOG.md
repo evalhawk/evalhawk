@@ -8,8 +8,19 @@ Before 1.0, a breaking change bumps the minor version and is marked **Breaking**
 
 ## [Unreleased]
 
+### Fixed
+
+- Thinking models (Qwen 3/3.5, DeepSeek-R1 via Ollama) no longer return empty verdicts:
+  new `reasoning_effort` option on `openai_compatible` judges and targets (the quickstart
+  sets `"none"`), and a reply cut off at `max_tokens` now says so instead of "unparseable".
+- Prompt v2: the reference answer is shown only to criteria that need it, and a renamed
+  built-in keeps its guidance. All LLM judge IDs change, so judgments are not mixed with v1.
+- `--help` no longer crashes on cp1252 Windows consoles; `judges cascade` prints valid TOML;
+  failure discovery ignores judge filler words.
+
 ### Added
 
+- `experiments/scripts/ollama_live_check.py`: end-to-end check with a real local judge.
 - Launch polish (Phase 10): README with real output, `examples/rag-support` (custom
   function judge, RAG target, retrieval metrics; runs offline and is tested), and a
   tag-triggered PyPI release workflow using trusted publishing (not yet run).

@@ -36,6 +36,7 @@ type = "openai_compatible"
 base_url = "http://localhost:11434/v1"
 model = "qwen3:8b"
 mode = "reason_then_verdict"
+reasoning_effort = "none"              # turn off "thinking" (faster, no cut-off replies)
 
 [evaluations.support]
 dataset = "data/questions.jsonl"

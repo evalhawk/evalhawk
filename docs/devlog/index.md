@@ -15,6 +15,7 @@ what each of us built and learned.
 
 | Date | Card | Entry | Author |
 |---|---|---|---|
+| 2026-11-10 | Live check | [EvalHawk with a real local judge (Ollama)](2026-11-10-ollama-live-check.md) | Venkata Sai Karthik |
 | 2026-11-01 | Phases 5-10 | [From library to product](2026-11-01-phases5-10-product.md) | Venkata Sai Karthik |
 | 2026-11-01 | Phase 4 | [Live judging](2026-11-01-phase4-live-judging.md) | Venkata Sai Karthik |
 | 2026-10-11 | D2-D7 | [Data backbone](2026-10-11-D2-D7-data-backbone.md) | Krishna Nandimandalam and Venkata Sai Karthik |
